@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MyCoin: Zero-Cost Serverless Cryptographic Ledger (v4)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+  :root {
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --border-color: #e2e8f0;
+    --terminal-bg: #0b1120;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+    background: #ffffff;
+    line-height: 1.68;
+    font-size: 13px;
+    margin: 0;
+    padding: 0;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm 14mm 16mm 14mm;
+    @bottom-right {
+      content: "Page " counter(page);
+      font-size: 9px;
+      color: #94a3b8;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    @bottom-left {
+      content: "🪙 MyCoin Protocol Whitepaper (v4.0) • Zero-Cost Serverless Ledger";
+      font-size: 9px;
+      color: #94a3b8;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  }
+
+  /* Hero Cover */
+  .hero-cover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #2e1065 100%);
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 30px 34px;
+    margin-bottom: 22px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .hero-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  .badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    display: inline-block;
+  }
+
+  .badge-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+  .badge-indigo { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.35); }
+  .badge-cyan { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.35); }
+  .badge-purple { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.35); }
+  .badge-amber { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.35); }
+  .badge-slate { background: rgba(148, 163, 184, 0.2); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.35); }
+
+  .hero-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0 0 2px 0;
+    letter-spacing: -0.5px;
+    background: linear-gradient(to right, #ffffff, #c7d2fe, #67e8f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-subtitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: #e0e7ff;
+    margin: 0 0 10px 0;
+  }
+
+  .hero-tagline {
+    font-size: 12px;
+    color: #94a3b8;
+    max-width: 95%;
+    margin: 0 0 20px 0;
+    line-height: 1.55;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.65);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .meta-card {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    padding-right: 6px;
+  }
+  .meta-card:last-child {
+    border-right: none;
+  }
+
+  .meta-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    margin-bottom: 2px;
+  }
+
+  .meta-val {
+    font-size: 11px;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4 {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  h2 {
+    font-size: 18px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 5px;
+    margin-top: 26px;
+    color: #1e1b4b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3 {
+    font-size: 14px;
+    color: #334155;
+    margin-top: 16px;
+    border-left: 3px solid #6366f1;
+    padding-left: 8px;
+  }
+
+  p {
+    margin: 0 0 9px 0;
+    color: var(--text-secondary);
+  }
+
+  ul, ol {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+  }
+
+  li {
+    margin-bottom: 5px;
+  }
+
+  strong {
+    color: var(--text-primary);
+  }
+
+  /* Callout Alert Boxes */
+  .callout {
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-left: 4px solid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .callout-header {
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .callout-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .callout-note {
+    background: #f0fdf4;
+    border-left-color: #10b981;
+    color: #064e3b;
+  }
+  .callout-note .callout-header { color: #047857; }
+
+  .callout-important {
+    background: #eef2ff;
+    border-left-color: #6366f1;
+    color: #1e1b4b;
+  }
+  .callout-important .callout-header { color: #4338ca; }
+
+  .callout-warning {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+    color: #78350f;
+  }
+  .callout-warning .callout-header { color: #b45309; }
+
+  .callout-tip {
+    background: #ecfeff;
+    border-left-color: #06b6d4;
+    color: #164e63;
+  }
+  .callout-tip .callout-header { color: #0e7490; }
+
+  /* Math Box */
+  .math-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    text-align: center;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .math-tag {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #6366f1;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .math-formula {
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    letter-spacing: 0.3px;
+  }
+
+  .inline-math {
+    font-family: 'Fira Code', Consolas, monospace;
+    font-weight: 600;
+    color: #4338ca;
+    background: #eef2ff;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 11.5px;
+  }
+
+  /* Terminal Window for Code and ASCII Diagrams */
+  .terminal-window {
+    background: var(--terminal-bg);
+    border-radius: 9px;
+    margin: 12px 0 16px 0;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+    overflow: hidden;
+    border: 1px solid #1e293b;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .terminal-bar {
+    background: #1e293b;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #334155;
+  }
+
+  .terminal-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot-red { background: #ef4444; }
+  .dot-yellow { background: #f59e0b; }
+  .dot-green { background: #10b981; }
+
+  .terminal-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #94a3b8;
+    font-family: 'Fira Code', Consolas, monospace;
+    letter-spacing: 0.3px;
+  }
+
+  .terminal-actions {
+    font-size: 8.5px;
+    color: #64748b;
+    font-family: 'Fira Code', Consolas, monospace;
+    font-weight: 700;
+  }
+
+  .terminal-pre {
+    margin: 0;
+    padding: 11px 14px;
+    background: var(--terminal-bg);
+    overflow-x: auto;
+  }
+
+  .terminal-pre code {
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+    font-size: 10px;
+    line-height: 1.42;
+    color: #38bdf8;
+    white-space: pre;
+    display: block;
+  }
+
+  /* Inline Code */
+  p code, li code {
+    background: #f1f5f9;
+    color: #4338ca;
+    padding: 1.5px 5px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'Fira Code', Consolas, monospace;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Modern Tables */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 14px 0 18px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    page-break-inside: avoid;
+    break-inside: avoid;
+    font-size: 11.5px;
+  }
+
+  th {
+    background: linear-gradient(to right, #1e1b4b, #312e81);
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 2px solid #4338ca;
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Badges & Pills */
+  .pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .pill-green { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+  .pill-indigo { background: #e0e7ff; color: #4338ca; border: 1px solid #a5b4fc; }
+  .pill-amber { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+  .pill-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 24px 0;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 10.5px;
+    color: #94a3b8;
+    margin-top: 30px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+
+<div class="hero-cover">
+  <div class="hero-badge-row">
+    <span class="badge badge-emerald">🟢 100% Free Forever ($0/Mo)</span>
+    <span class="badge badge-indigo">⚡ Cloudflare Edge & SQLite DO</span>
+    <span class="badge badge-cyan">🔒 Non-Custodial (Ed25519)</span>
+    <span class="badge badge-purple">⛓️ Bitcoin OpenTimestamps</span>
+    <span class="badge badge-amber">📱 Mobile & Web Native</span>
+    <span class="badge badge-slate">🚀 v4.0 Final Specification</span>
+  </div>
+  <h1 class="hero-title">🪙 MyCoin</h1>
+  <p class="hero-subtitle">Zero-Cost Serverless Cryptographic Ledger</p>
+  <p class="hero-tagline">A mathematically tamper-evident, non-custodial micro-currency engineered to operate permanently at $0 running cost across Discord, Telegram, Web, and IoT without requiring a credit card or always-on servers.</p>
+  
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="meta-label">LEAD ARCHITECT</div>
+      <div class="meta-val">Aditya Gusain</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-label">DATE & EDITION</div>
+      <div class="meta-val">November 2026 • v4 Spec</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-label">PROTOTYPE STATE</div>
+      <div class="meta-val">Milestone 1 Verified (Ed25519)</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-label">OPERATING BUDGET</div>
+      <div class="meta-val">Strictly $0.00 / No Credit Card</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="content-body">
+<div class="callout callout-note">
+  <div class="callout-header"><span class="callout-icon">📌</span> <span>Executive Summary</span></div>
+  <div class="callout-body"><h3>📌 Executive Abstract: The 60-Second Summary</h3>
+<p><strong>MyCoin</strong> is a decentralized, non-custodial digital micro-currency engineered to operate permanently at <strong>$0 running cost</strong> with <strong>no credit card required</strong>. Built for frictionless use across Discord, Telegram, Web browsers, and IoT microcontrollers, the protocol eliminates the trust flaws of traditional database bots (OwO, Dank Memer) while avoiding the prohibitive energy costs, transaction fees, and node infrastructure of heavy Layer-1 blockchains (Bitcoin, Ethereum).</p>
+<p>The system achieves mathematical tamper-evidence through a <strong>single-threaded SQLite Durable Object sequencer</strong>, <strong>client-side Ed25519 digital signatures</strong>, and <strong>hourly public cryptographic anchoring to Bitcoin via OpenTimestamps and public Git repositories</strong>. </p>
+<p>To solve the fundamental economic and security vulnerabilities of free serverless tiers, MyCoin introduces:
+* 🗄️ <strong>Lazy Merkle Claims:</strong> Collapses miner settlement from 120,000 writes/day to exactly 24 writes/day, keeping the network permanently within Cloudflare's 100,000 write limit.
+* 🛡️ <strong>Frictionless Inbound, Gated Outbound Tiers:</strong> Anyone can receive coins with 0-KYC and 0-friction, while sending and mining are protected by stacked Zero-PII identity trust scores (Google, Discord, Telegram phone verification).
+* 🤝 <strong>Human-Friendly Spam Protection:</strong> Everyday users enjoy a <strong>feeless daily allowance (first 5 free)</strong> and <strong>token-bucket burst capacity</strong> (no annoying cooldowns or punitive fees), backed by a client-side <strong>Micro-Proof-of-Work shield</strong> that silently chokes automated bot floods.
+* ⛏️ <strong>Cuckoo Cycle Memory-Latency Mining:</strong> Replaces brute-force SHA-256 with memory-bound graph cycle exploration in WebAssembly, leveling the playing field between smartphones and GPUs while enabling instant (&lt;0.2 ms) verification at the serverless edge.</p></div>
+</div>
+
+<hr />
+<h2>1. 💡 The Vision: Reimagining Digital Value from Scratch</h2>
+<h3>1.1 The Fundamental Problem with Existing Systems</h3>
+<p>Digital currencies and community points today are trapped between two broken extremes:</p>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">⚖️ System Paradigm Comparison</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>┌───────────────────────────────────────┐         ┌───────────────────────────────────────┐
+│       CENTRALIZED BOT ECONOMIES       │         │        HEAVY LAYER-1 BLOCKCHAINS      │
+│         (OwO, Dank Memer, RPGs)       │         │          (Bitcoin, Ethereum)          │
+├───────────────────────────────────────┤         ├───────────────────────────────────────┤
+│ • Mutable numbers in private MySQL DB │         │ • Massive node infrastructure costs   │
+│ • Admins can print coins invisibly    │   VS.   │ • High transaction &amp; gas fees (&lt;span class=&quot;inline-math&quot;&gt;2-&lt;/span&gt;50)│
+│ • Locked inside a single chat app     │         │ • Complex seed phrases &amp; high latency │
+│ • Vulnerable to silent database wipes │         │ • Burns megawatts of electricity      │
+└───────────────────────────────────────┘         └───────────────────────────────────────┘
+                                    │                 │
+                                    └────────┬────────┘
+                                             ▼
+                        ┌─────────────────────────────────────────┐
+                        │              THE MYCOIN SWEET SPOT      │
+                        │ • Centrally sequenced for 0-latency &amp; $0│
+                        │ • Cryptographically tamper-evident      │
+                        │ • Non-custodial (users own private keys)│
+                        │ • 100% Free Forever ($0 running cost)   │
+                        │ • Cross-platform (Web, Discord, TG, IoT)│
+                        └─────────────────────────────────────────┘
+</code></pre>
+</div>
+
+<h3>1.2 Comparison Matrix: How MyCoin Wins</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Metric / Feature</th>
+<th style="text-align: left;">Traditional Chat Bots</th>
+<th style="text-align: left;">Heavy Blockchains</th>
+<th style="text-align: left;"><strong>🪙 MyCoin (v4 Architecture)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Monthly Hosting Cost</strong></td>
+<td style="text-align: left;"><span class="inline-math">5 –</span>50 / month (VPS)</td>
+<td style="text-align: left;"><span class="inline-math">100k+ (Mining / Nodes)</td>
+<td style="text-align: left;"><strong></span>0.00 Forever (Cloudflare Free Tier)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Credit Card Needed?</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">Yes (Gas fees / Nodes)</td>
+<td style="text-align: left;"><strong>Strictly NO (Zero-risk free tiers)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>User Transaction Fees</strong></td>
+<td style="text-align: left;">Arbitrary Bot Tax</td>
+<td style="text-align: left;"><span class="inline-math">0.50 –</span>50.00 Gas</td>
+<td style="text-align: left;"><strong>100% Free (5 free/day + token-bucket)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Can Creator Cheat?</strong></td>
+<td style="text-align: left;"><strong>Yes</strong> (Edits SQL rows)</td>
+<td style="text-align: left;">No (Consensus)</td>
+<td style="text-align: left;"><strong>No (Bitcoin OpenTimestamps + Git Merkle)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Key Custody</strong></td>
+<td style="text-align: left;">Centralized in Bot DB</td>
+<td style="text-align: left;">Non-Custodial</td>
+<td style="text-align: left;"><strong>Non-Custodial (WebCrypto / Passkeys)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Hardware Mining Fair</strong></td>
+<td style="text-align: left;">N/A</td>
+<td style="text-align: left;">No (ASICs &amp; GPU rigs)</td>
+<td style="text-align: left;"><strong>Yes (Phones ≈ PCs via Memory Latency)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Cross-Platform Sync</strong></td>
+<td style="text-align: left;">No (Locked to Discord)</td>
+<td style="text-align: left;">Wallets only</td>
+<td style="text-align: left;"><strong>Universal (Discord, Telegram, Web, IoT)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>1.3 The Village Bank Analogy 🏦</h3>
+<p>To understand MyCoin without technical jargon, imagine an honest village bank:</p>
+<ul>
+<li>
+<p>📖 <strong>The Notebook (Append-Only Ledger):</strong> The banker has a notebook. Balances are not arbitrary numbers; they are the total sum of history. No eraser exists.</p>
+</li>
+<li>
+<p>🔏 <strong>The Fingerprint (Hash Chain):</strong> Every entry records a SHA-256 fingerprint of the entry right above it. If an admin secretly tampers with line 12, lines 13 through 1,000 stop matching instantly.</p>
+</li>
+<li>
+<p>📸 <strong>The Hourly Photograph (Bitcoin &amp; Git Anchors):</strong> Every hour, the banker photographs the latest page and pins it in the village square (Bitcoin OpenTimestamps + public GitHub repo). Even if the banker goes rogue tomorrow, past history can never be rewritten!</p>
+</li>
+<li>
+<p>🔑 <strong>The Personal Stamp (Ed25519 Signatures):</strong> Villagers never hand the banker their secret password. Every transaction is stamped directly on the villager’s phone using private cryptographic keys.</p>
+</li>
+<li>
+<p>🏧 <strong>The Multi-App ATMs:</strong> Discord, Telegram, and the Web Wallet are just ATMs connected to this single, tamper-evident village bank.</p>
+</li>
+</ul>
+<hr />
+<h3>1.4 A Day in the Life: How Everyday People Experience MyCoin 🌟</h3>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">🌟 User Journey & End-to-End Transaction Flow</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>   [ ALICE: The Gamer ]            [ BOB: The Friend ]          [ CHARLIE: The Miner ]
+            │                              ▲                             │
+   1. Alice types `/pay 5 @Bob`            │                    1. Charlie opens web wallet
+      in Discord.                          │                       on his iPhone.
+            │                              │                             │
+   2. Her browser signs payload            │                    2. Solves Cuckoo Cycle puzzle
+      with private Passkey.                │                       in background (45s).
+            │                              │                             │
+   3. Server verifies in 0.1ms;            │                    3. Submits 42 numbers to server
+      settles with 0 fees.                 │                       (verified in 0.2ms).
+            │                              │                             │
+            └────────── 4. Bob receives 5 coins! ────────────────────────┴─► Earns fair share!
+                           (Instant notification)
+</code></pre>
+</div>
+
+<ol>
+<li><strong>Alice sends a tip on Discord:</strong> Alice runs <code>/pay 5 @Bob</code>. Her Discord app opens an ephemeral signing prompt. Alice confirms with FaceID / TouchID. The transfer completes in 0.05 seconds with <strong>zero fees</strong>.</li>
+<li><strong>Bob claims with zero hassle:</strong> Bob has never heard of crypto. He opens the link, receives his 5 coins into a friction-free <strong>Ghost Wallet</strong>, and sees his live balance immediately.</li>
+<li><strong>Charlie mines on his phone:</strong> Charlie opens the web wallet on his Android phone during lunch. His phone solves a gentle memory-bound puzzle for 45 seconds while staying cool. He earns freshly minted coins alongside PC users.</li>
+<li><strong>Eve the spammer is neutralized:</strong> Eve writes a Python script trying to send 10,000 transactions to crash the server. After 5 transactions, her token bucket empties. Her script is forced to solve 0.8 seconds of client-side math for every request, burning 2.5 hours of CPU while Cloudflare remains 100% unaffected!</li>
+</ol>
+<hr />
+<h2>2. 🏛️ Full System Architecture (The Three-Layer Model)</h2>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">Architecture & Flow Specification</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>[ Discord Bot Webhook ]    [ Telegram Mini-App ]    [ Web Wallet &amp; Explorer ]    [ ESP32 IoT Node ]
+          │                          │                          │                        │
+          └──────────────────────────┴─────────────┬────────────┴────────────────────────┘
+                                                   │ Direct HTTPS Requests
+                                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 1: STATELESS EDGE GATE (Cloudflare Worker)                                                │
+│ • Cloudflare WAF &amp; Turnstile anti-bot verification (Blocks data center botnets at DNS edge)     │
+│ • Ed25519 Webhook signature authentication for Discord and Telegram                             │
+│ • Sub-millisecond routing and static asset delivery from Cloudflare Pages cache                │
+│ • Micro-Proof-of-Work verifier (&lt;0.1 ms CPU) for burst traffic                                 │
+└────────────────────────────────────────────────┬────────────────────────────────────────────────┘
+                                                 │ Serialized Internal Calls
+                                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 2: ATOMIC STATE SEQUENCER (Single SQLite Durable Object)                                  │
+│ • Single-Threaded Execution Queue: Eliminates all race conditions and double-spend attacks      │
+│ • SQLite Monotonic State: Wallets, Balances, Nonces, and the Single Global SHA-256 Hash Chain  │
+│ • In-Memory Token Bucket: Smooth burst-rate limiter (Capacity: 5 txs, refill: 1 per 2 mins)    │
+│ • Lazy Merkle Claim Engine: 1 write per hour for epoch payouts (Strictly 24 writes/day)         │
+└────────────────────────────────────────────────┬────────────────────────────────────────────────┘
+                                                 │ Hourly Scheduled Event
+                                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 3: PUBLIC WITNESSES &amp; IMMUTABLE ANCHORS                                                   │
+│ • Cloudflare Cron Trigger: Wakes automatically once every 60 minutes                            │
+│ • drand Beacon Integration: Queries League of Entropy for unbiasable public epoch randomness     │
+│ • Bitcoin OpenTimestamps (OTS): Submits the epoch Merkle root to the Bitcoin blockchain ($0)    │
+│ • Git-as-a-Blockchain: Pushes signed compressed JSONL commit to public GitHub repository        │
+│ • Static Snapshot CDN: GitHub Pages serves history to miners &amp; explorers with zero DO read load │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+</div>
+
+<hr />
+<h2>3. 🔐 Cryptographic Foundations</h2>
+<h3>3.1 Non-Custodial Key Architecture (Ed25519)</h3>
+<p>The server never holds, sees, or generates users' private keys:</p>
+<ul>
+<li>
+<p>🔑 <strong>Algorithm:</strong> Edwards-curve Digital Signature Algorithm over Curve25519 (<strong>Ed25519</strong>).</p>
+</li>
+<li>
+<p>⚡ <strong>Performance:</strong> 64-byte signatures, 32-byte public keys, verified in sub-millisecond CPU time.</p>
+</li>
+<li>
+<p>🛡️ <strong>Execution:</strong> Generated inside the user's browser using native <code>crypto.subtle</code> (WebCrypto API).</p>
+</li>
+<li>
+<p>💾 <strong>Key Derivation &amp; Backup:</strong> </p>
+</li>
+<li><strong>Primary:</strong> WebAuthn Hardware Passkeys (tied to Apple Secure Enclave / Android StrongBox / Windows TPM).</li>
+<li><strong>Backup:</strong> Standard BIP-39 12-word mnemonic phrase displayed once at creation to prevent browser cache loss.</li>
+</ul>
+<h3>3.2 Canonical Length-Prefixed Serialization (<code>MYCOIN_TX_V1:</code>)</h3>
+<p>To mathematically prevent delimiter injection and length-extension collision attacks (where <code>"ab" + "c"</code> collides with <code>"a" + "bc"</code>), all transactions are packed into a canonical format before signing:</p>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">🔐 Canonical Tagged Serialization Format</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>Canonical Format Structure:
+Payload = &quot;MYCOIN_TX_V1:&quot; + len(Type) + &quot;:&quot; + Type + &quot;:&quot; + len(Sender) + &quot;:&quot; + Sender + &quot;:&quot; + 
+          len(Receiver) + &quot;:&quot; + Receiver + &quot;:&quot; + Amount + &quot;:&quot; + Fee + &quot;:&quot; + Nonce + &quot;:&quot; + 
+          len(PrevHash) + &quot;:&quot; + PrevHash + &quot;:&quot; + Timestamp
+
+Sample Formatted Payload:
+MYCOIN_TX_V1:8:TRANSFER:64:d0453478...:64:74c161a9...:15500000:0:0:64:00000000...:1795264846
+</code></pre>
+</div>
+
+<h3>3.3 Strict Micro-Unit Integer Arithmetic</h3>
+<p>Computers cannot accurately represent decimal floating-point numbers (<span class="inline-math">0.1 + 0.2 = 0.30000000000000004</span>). MyCoin enforces <strong>strict integer math</strong>:</p>
+<ul>
+<li>
+<p>📏 <strong>Base Unit:</strong> 1 Coin = <strong>1,000,000 Micro-Units</strong> (<span class="inline-math">10^6</span>).</p>
+</li>
+<li>
+<p>🔒 <strong>Safe Supply Ceiling:</strong> Hard-capped at <strong>1,000,000,000 Coins</strong> (<span class="inline-math">10^15</span> micro-units). This remains well below JavaScript's safe integer ceiling (<span class="inline-math">2^53 - 1 ≈ 9 × 10^15</span>), eliminating any integer overflow or truncation bugs.</p>
+</li>
+</ul>
+<hr />
+<h2>4. 🤝 Human-Friendly Anti-Spam &amp; Fee Architecture</h2>
+<div class="callout callout-important">
+  <div class="callout-header"><span class="callout-icon">🎯</span> <span>Core Design Mandate</span></div>
+  <div class="callout-body"><h3>🎯 Core Design Mandate</h3>
+<p>Ordinary users must <strong>never</strong> feel frustrated by harsh fees, clunky cooldown screens, or confusing blockchain gas calculations. The currency must feel as fast and effortless as cash.</p></div>
+</div>
+
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">Architecture & Flow Specification</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>                     [ THE MULTI-TIER DEFENSE AGAINST TRANSACTION SPAM ]
+
+    1. HUMAN LAYER: FEEL-FREE USE          2. SPEED LAYER: TOKEN BUCKET
+    ┌──────────────────────────────────┐   ┌──────────────────────────────────┐
+    │ • First 5 transfers / day are    │   │ • Burst capacity: Up to 5 sends  │
+    │   100% FREE (0 Fee).             │   │   in 5 seconds allowed!          │
+    │ • 99% of normal users never pay  │   │ • Bucket refills automatically:  │
+    │   a single micro-unit!           │   │   1 token every 2 minutes.       │
+    └──────────────────────────────────┘   └──────────────────────────────────┘
+                     │                                      │
+                     └──────────────────┬───────────────────┘
+                                        ▼
+    3. BOT DEFENSE: MICRO-POW SHIELD       4. ECONOMIC SINK: SUSTAINED FEES
+    ┌──────────────────────────────────┐   ┌──────────────────────────────────┐
+    │ If a user exhausts burst tokens, │   │ If an automated script sends     │
+    │ the browser silently crunches a  │   │ &gt;20 transfers in an hour, a tiny │
+    │ 0.8-second JavaScript puzzle.    │   │ 0.001 coin micro-fee is burned.  │
+    │ (Humans wait 1s; bots hit wall). │   │ Ping-pong scripts burn to 0!     │
+    └──────────────────────────────────┘   └──────────────────────────────────┘
+</code></pre>
+</div>
+
+<h3>4.1 The "First 5 are on the House" Daily Allowance 🎁</h3>
+<ul>
+<li>
+<p>Every verified wallet receives <strong>5 free transfers every single day</strong> with <strong>0.000000 coin fee</strong>.</p>
+</li>
+<li>
+<p>For 99% of community members tipping friends, splitting bills, or playing casual games, <strong>MyCoin is 100% free of transaction fees</strong>.</p>
+</li>
+</ul>
+<h3>4.2 Token-Bucket Smoothing (Zero Annoying Cooldowns) ⚡</h3>
+<p>Rigid timers (e.g. <em>"Please wait 15 seconds before sending again"</em>) destroy user experience. MyCoin uses the industry-standard <strong>Token Bucket Algorithm</strong> held in Durable Object RAM:</p>
+<ul>
+<li>
+<p>🪣 <strong>Bucket Capacity:</strong> 5 tokens.</p>
+</li>
+<li>
+<p>💧 <strong>Refill Rate:</strong> 1 token every 120 seconds.</p>
+</li>
+<li>
+<p>🏃 <strong>User Experience:</strong> You can send 3 tips to 3 friends in 5 seconds without interruption. As long as your average daily rhythm is human, you never encounter a cooldown screen.</p>
+</li>
+</ul>
+<h3>4.3 The Client-Side Micro-PoW Shield 🛡️</h3>
+<p>When a wallet exhausts its token bucket (because an automated loop is firing rapid-fire payments):
+1. The server does not throw an angry error. It responds with: <code>HTTP 402: Micro-PoW Required</code>.
+2. The user's web wallet immediately solves a <strong>0.8-second JavaScript hashcash puzzle</strong> in a background WebWorker thread and resubmits.
+3. For a human, waiting 1 second for a 6th rapid transfer is completely unnoticeable.
+4. For an automated bot script attempting to send 50,000 transactions to exhaust Cloudflare's 100,000 write quota, solving 50,000 seconds of compute requires <strong>14 hours of continuous CPU</strong>, completely crushing the spam attack!</p>
+<h3>4.4 The Ping-Pong Economic Trap (Self-Destruction) 🕳️</h3>
+<p>If an attacker attempts to write a script bouncing 1 coin back and forth between two colluding wallets (<code>Alice ⇄ Bob</code>):</p>
+<ul>
+<li>
+<p>Once the free allowance and burst tokens are exhausted, each subsequent transfer burns a <strong>0.001 coin fee</strong> (<span class="inline-math">1,000</span> micro-units) permanently.</p>
+</li>
+<li>
+<p>1,000 ping-pong transactions burns <strong>1 whole coin</strong>.</p>
+</li>
+<li>
+<p>50,000 ping-pong transactions burns <strong>50 coins</strong>.</p>
+</li>
+<li>
+<p>The spammer's balance is drained to zero, while generating <strong>zero reputation points</strong> (because reputation is derived from identity verification and account age, never transaction volume).</p>
+</li>
+</ul>
+<hr />
+<h2>5. 🛡️ Identity Stacking &amp; Asymmetric Wallet Tiers</h2>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">🛡️ Asymmetric Wallet Tier State Machine</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TIER 0: GHOST WALLET (0 Points)                                                                 │
+│ • Prerequisite: Open any claim link (Instant burner wallet generated in 0.5s via WebCrypto).   │
+│ • Inbound: UNLIMITED (Anyone can receive coins with zero KYC, zero passwords, zero friction).   │
+│ • Outbound: 0 (Locked until unlocked with 1 social link).                                       │
+└────────────────────────────────┬────────────────────────────────────────────────────────────────┘
+                                 │ Link Google OR Discord (1 Tap)
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TIER 1: CASUAL CITIZEN (25+ Points)                                                             │
+│ • Prerequisite: Google (+20) OR Discord (+20) + Turnstile Pass (+10).                           │
+│ • Inbound: UNLIMITED.                                                                           │
+│ • Outbound: Up to 10 transfers / day.                                                           │
+│ • Mining: 1 share / hour (Probationary tier).                                                   │
+└────────────────────────────────┬────────────────────────────────────────────────────────────────┘
+                                 │ Add Telegram Phone Verify OR GitHub
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TIER 2: TRUSTED COMMUNITY MEMBER (50+ Points)                                                   │
+│ • Prerequisite: Google + Discord + Telegram Phone Verify (+25).                                 │
+│ • Outbound: Up to 50 transfers / day.                                                           │
+│ • Mining: 5 shares / hour.                                                                      │
+└────────────────────────────────┬────────────────────────────────────────────────────────────────┘
+                                 │ Hardware Passkey + 14-Day Account Age
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TIER 3: NETWORK GUARDIAN (80+ Points)                                                           │
+│ • Prerequisite: 3+ Platforms + WebAuthn Hardware Passkey (+15) + Age &gt; 14 Days (+10).           │
+│ • Outbound: Unlimited (Subject to token-bucket smoothing).                                      │
+│ • Mining: 15 shares / hour (Full capacity).                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+</div>
+
+<h3>5.1 The $0 Phone Verification Technique (Via Telegram) 📱</h3>
+<p>Paid SMS services (Twilio) cost <span class="inline-math">0.05 per SMS and require credit cards. MyCoin verifies phone uniqueness for <strong></span>0 forever</strong>:
+1. The user clicks <em>"Verify Phone"</em> in the Web Wallet.
+2. The browser redirects to our official Telegram bot.
+3. The user taps a native Telegram button: <code>[ 📲 Share Verified Contact ]</code>.
+4. Telegram cryptographically returns the user's carrier-verified phone number to our webhook for free.
+5. <strong>Zero-PII Blinded Storage:</strong> The server computes:</p>
+<div class="math-box">
+  <div class="math-tag">MATHEMATICAL SPECIFICATION</div>
+  <div class="math-formula">Blinded Identity = HMAC-SHA256(Telegram_Phone_Number, Server_Secret)</div>
+</div>
+
+<p>The server stores only the 64-character hash. The user's real phone number is discarded immediately from memory. If a bot farmer attempts to link the same phone to a second wallet, SQLite throws a <code>UNIQUE constraint failed</code> error!</p>
+<hr />
+<h2>6. ⛏️ Cuckoo Cycle Mining: The Memory-Latency Equalizer</h2>
+<h3>6.1 Why Traditional Mining Fails for Free Serverless</h3>
+<ul>
+<li>
+<p>❌ <strong>SHA-256 Hashcash (Bitcoin-style):</strong> A gaming GPU hashes <span class="inline-math">10,000×</span> faster than a smartphone. Bot farms monopolize all coins.</p>
+</li>
+<li>
+<p>❌ <strong>Argon2 / Scrypt (Memory-Hard):</strong> While fair to phones, verifying an Argon2 hash takes the server 100 ms to 1 second of CPU, which <strong>instantly crashes Cloudflare Worker's 10 ms CPU limit</strong>.</p>
+</li>
+</ul>
+<h3>6.2 The Solution: Cuckoo Cycle (Cuckatoo in WASM) 🧩</h3>
+<p>Cuckoo Cycle (invented by John Tromp) is an <strong>asymmetric, memory-latency bound graph puzzle</strong>:</p>
+<ul>
+<li>
+<p>🔍 <strong>The Client Work (The Library Scavenger Hunt):</strong> Using a seed, the miner's browser generates a random bipartite graph of <span class="inline-math">2^24</span> edges (<span class="inline-math">≈ 32 MB</span> of RAM, fitting comfortably in mobile browsers). The miner executes a pointer-chasing search for a <strong>42-node closed cycle</strong>.</p>
+</li>
+<li>
+<p>⚖️ <strong>Why It Is Hardware-Fair:</strong> Pointer-chasing is bound by RAM latency (waiting for memory cache lines to load). Because mobile LPDDR5 RAM latency is comparable to desktop DDR5 latency, a high-end PC is only about <strong><span class="inline-math">1.5×</span> to <span class="inline-math">2×</span> faster than a smartphone</strong>, rather than <span class="inline-math">10,000×</span> faster.</p>
+</li>
+<li>
+<p>⚡ <strong>The 0.2 ms Server Miracle:</strong> Finding the 42-cycle takes the user's phone 45 seconds of memory exploration. But the solution consists of just <strong>42 edge indices</strong>. The Cloudflare Worker verifies that those 42 numbers form a valid cycle in <strong>under 0.2 milliseconds of CPU time</strong>!</p>
+</li>
+<li>
+<p>🧂 <strong>Unique Per-Miner Salting:</strong></p>
+</li>
+</ul>
+<div class="math-box">
+  <div class="math-tag">MATHEMATICAL SPECIFICATION</div>
+  <div class="math-formula">Graph Seed = SHA256(drand_round_seed  ∥  miner_wallet_address  ∥  ticket_counter)</div>
+</div>
+
+<p>No two miners explore the same graph. Solutions cannot be copied, stolen, or pre-computed.</p>
+<hr />
+<h2>7. 🗄️ Lazy Merkle Claims: Solving the 100,000 Write Budget</h2>
+<h3>7.1 The Mathematical Bottleneck</h3>
+<p>In early designs, paying 1,000 miners hourly required writing an epoch reward row, a balance update, and a transaction row for each miner:</p>
+<div class="math-box">
+  <div class="math-tag">MATHEMATICAL SPECIFICATION</div>
+  <div class="math-formula">Daily Writes = 1,000  miners × 24  epochs/day × 5  writes = 120,000 writes/day</div>
+</div>
+
+<p>This exceeds Cloudflare’s 100,000 daily limit before a single transfer is made!</p>
+<h3>7.2 The Lazy Claim Architecture (Uniswap-Style Merkle Drops)</h3>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">🗄️ Lazy Merkle Tree Settlement Flow</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>Hourly Epoch Settlement (Computed in RAM):
+  Miner Alice: 4.5 coins  ──► Hash(Alice, 4.5)  ──┐
+  Miner Bob:   3.2 coins  ──► Hash(Bob, 3.2)    ──┼──► Merkle Tree ──► Merkle Root (64 chars)
+  Miner Carol: 1.8 coins  ──► Hash(Carol, 1.8)  ──┘
+                                                        │
+                                                        ▼
+                                       WRITTEN TO DURABLE OBJECT SQLITE:
+                                       `INSERT INTO epochs (epoch_id, payout_root) VALUES (42, '7f8a...');`
+                                       (STRICTLY 1 WRITE PER HOUR = 24 WRITES/DAY!)
+</code></pre>
+</div>
+
+<ul>
+<li>🕒 <strong>When do balances update?</strong> On demand! When Alice wants to spend her mined coins, her web wallet downloads her tiny 4-hash Merkle proof from GitHub Pages and submits it with her payment:</li>
+</ul>
+<div class="math-box">
+  <div class="math-tag">MATHEMATICAL SPECIFICATION</div>
+  <div class="math-formula">Verify(Root_42, Alice_Address, Amount, MerkleBranch) → TRUE</div>
+</div>
+
+<ul>
+<li>📈 <strong>Result:</strong> Database writes scale with <em>actual payments</em>, not with the number of miners. The system easily supports <strong>50,000+ active miners</strong> on the 100% free tier.</li>
+</ul>
+<hr />
+<h2>8. 🌐 Public Witnessing: Anchoring to Bitcoin &amp; Git</h2>
+<p>Even though Cloudflare runs the database, <strong>the operator cannot cheat or edit history invisibly</strong>:</p>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">Architecture & Flow Specification</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>[ Hourly Epoch Seal ]
+        │
+        ├──► 1. Query drand (League of Entropy) for unbiasable public beacon.
+        │
+        ├──► 2. Hash all epoch transactions + payout root into Epoch Merkle Root.
+        │
+        ├──► 3. Submit Epoch Merkle Root to Bitcoin blockchain via OpenTimestamps ($0).
+        │
+        └──► 4. Push signed compressed JSONL commit to public GitHub repo via REST API.
+</code></pre>
+</div>
+
+<ul>
+<li>
+<p>🎲 <strong>drand Public Beacon:</strong> Epoch seeds are tied to external distributed randomness. Neither the creator nor miners can predict future seeds.</p>
+</li>
+<li>
+<p>⛓️ <strong>Bitcoin OpenTimestamps (OTS):</strong> Proves that the exact ledger state existed at a specific Bitcoin block height. Rewriting history would require re-mining the Bitcoin blockchain.</p>
+</li>
+<li>
+<p>📦 <strong>Git as a Blockchain:</strong> Every Git commit is an immutable Merkle tree. Anyone in the world can run <code>git clone</code> to hold a complete, byte-for-byte verifiable backup of the entire economy.</p>
+</li>
+</ul>
+<hr />
+<h2>9. 🗄️ Target Database Schema (SQLite Durable Object)</h2>
+<pre><code class="language-sql">-- WALLETS: Balances, replay protection, and identity progression
+CREATE TABLE wallets (
+  address TEXT PRIMARY KEY,             -- Hex Ed25519 Public Key (64 chars)
+  balance_micro INTEGER NOT NULL DEFAULT 0 CHECK (balance_micro &gt;= 0),
+  nonce INTEGER NOT NULL DEFAULT 0,     -- Strictly increasing replay protection
+  last_ticket INTEGER NOT NULL DEFAULT 0, -- Monotonic mining ticket counter
+  sybil_score INTEGER NOT NULL DEFAULT 0, -- 0 = Ghost, 25+ = Tier 1, 50+ = Tier 2, 80+ = Tier 3
+  tier INTEGER NOT NULL DEFAULT 0       -- 0: Ghost, 1: Casual, 2: Citizen, 3: Guardian
+);
+
+-- IDENTITIES: Zero-PII blinded 1:1 account mappings
+CREATE TABLE identities (
+  blinded_hash TEXT PRIMARY KEY,        -- HMAC(OAuth_ID, Server_Secret)
+  wallet_address TEXT NOT NULL,
+  provider TEXT NOT NULL,               -- 'GOOGLE' | 'DISCORD' | 'TELEGRAM_PHONE' | 'GITHUB'
+  created_at INTEGER NOT NULL
+);
+
+-- TRANSACTIONS: Single global tamper-evident hash chain
+CREATE TABLE transactions (
+  tx_hash TEXT PRIMARY KEY,             -- SHA256 canonical encoding
+  prev_hash TEXT NOT NULL,              -- Chain head link
+  tx_type TEXT NOT NULL,                -- 'TRANSFER' | 'MINT' | 'BURN' | 'CLAIM'
+  sender TEXT NOT NULL,
+  receiver TEXT NOT NULL,
+  amount_micro INTEGER NOT NULL CHECK (amount_micro &gt; 0),
+  fee_micro INTEGER NOT NULL DEFAULT 0 CHECK (fee_micro &gt;= 0),
+  signature TEXT NOT NULL,              -- Client Ed25519 signature (or Merkle Proof for MINT)
+  timestamp INTEGER NOT NULL
+);
+
+-- EPOCHS: Hourly public anchors &amp; lazy payout roots
+CREATE TABLE epochs (
+  epoch_id INTEGER PRIMARY KEY,
+  merkle_root TEXT NOT NULL,            -- Root of all transactions and claims in epoch
+  payout_merkle_root TEXT NOT NULL,     -- Root of miner lazy claim tree
+  drand_round INTEGER NOT NULL,
+  ots_proof TEXT,                       -- Bitcoin OpenTimestamps proof receipt
+  ots_status TEXT DEFAULT '<span class="pill pill-amber">PENDING</span>'     -- '<span class="pill pill-amber">PENDING</span>' -&gt; 'CONFIRMED'
+);
+</code></pre>
+<hr />
+<h2>10. 🛡️ Security Audit: The 12 Critical Failure Modes &amp; Fixes</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Attack Vector / Failure Mode</th>
+<th>Why Earlier Designs Failed</th>
+<th>The v4 Architectural Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>Write Budget Exhaustion</strong></td>
+<td>1,000 miners <span class="inline-math">×</span> 24 epochs = 120k writes/day (exceeds 100k DO cap).</td>
+<td><strong>Lazy Merkle Claims:</strong> Epoch settlement writes only 1 row/hour (24 writes/day).</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Worker 10 ms CPU Limit</strong></td>
+<td>Verifying 100 shares takes 30 ms (Worker crashes).</td>
+<td><strong>Commit-and-Sample:</strong> Submitter commits root; Worker verifies 3 random leaves (&lt;1 ms).</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>Square-Root Sybil Flaw</strong></td>
+<td><span class="inline-math">√(k · s) &gt; √(s)</span> mathematically rewards splitting into fake wallets.</td>
+<td><strong>Linear Weights + Hard Identity Cap:</strong> 1 share = 1 pt; strict per-identity limits.</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>Memory Puzzle Defects</strong></td>
+<td>Random cycle lengths; 32MB fits modern CPU L3 caches; unsalted graphs.</td>
+<td><strong>Cuckoo Cycle in WASM:</strong> Salted with <code>drand + wallet + ticket</code>. Verified in &lt;0.2 ms.</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><strong>drand Pairing CPU Limit</strong></td>
+<td>BLS12-381 pairing check takes 20–50 ms in JS (Worker crashes).</td>
+<td><strong>Edge Multi-Relay Quorum:</strong> Verify Cloudflare internal + 1 relay. Full BLS checked in Cron.</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td><strong>Durable Object RAM Eviction</strong></td>
+<td>Cloudflare restarts DO; in-memory Maps vanish.</td>
+<td><strong>Two-Tier Storage:</strong> Monotonic nonces/tickets in SQLite; only sliding rate limits in RAM.</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td><strong>P2P Privacy / NAT Issues</strong></td>
+<td>WebRTC STUN leaks user IP addresses (breaks Zero-PII).</td>
+<td><strong>HTTPS Direct Authority:</strong> Core transactions go direct to Worker. P2P is optional CDN.</td>
+</tr>
+<tr>
+<td><strong>8</strong></td>
+<td><strong>Encoding Ambiguities</strong></td>
+<td>Plain string concatenation allows length-extension collisions.</td>
+<td><strong>Canonical Tagged Encoding:</strong> <code>MYCOIN_TX_V1:</code> length-prefixed. Safe cap at <span class="inline-math">2⁵⁰</span> micro-units.</td>
+</tr>
+<tr>
+<td><strong>9</strong></td>
+<td><strong>Fake Audit Reporting</strong></td>
+<td>Miners return <code>audit_passed: true</code> without checking.</td>
+<td><strong>Poisoned Canary Injection:</strong> Server injects 1 bad tx in 100. Miner must catch the canary.</td>
+</tr>
+<tr>
+<td><strong>10</strong></td>
+<td><strong>Ping-Pong Spam Floods</strong></td>
+<td>Rapid transfer loops consume database writes.</td>
+<td><strong>Feeless Allowance + Token Bucket + Micro-PoW:</strong> Bursts require 0.8s client-side work.</td>
+</tr>
+<tr>
+<td><strong>11</strong></td>
+<td><strong>Unmined Epochs &amp; Dust</strong></td>
+<td>Unaccounted unmined coins cause uncontrolled supply.</td>
+<td><strong>Unmined Pool Burn:</strong> Unmined hourly pools burn permanently. Dust rolls to next epoch.</td>
+</tr>
+<tr>
+<td><strong>12</strong></td>
+<td><strong>Disaster Recovery</strong></td>
+<td>DO corruption causes total ledger loss.</td>
+<td><strong>Git Replay:</strong> Ledger can be 100% reconstructed by replaying signed commits from GitHub.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>11. ⚖️ Legal &amp; Regulatory Demarcation</h2>
+<ul>
+<li>
+<p>🛡️ <strong>Strict Closed-Loop Utility Currency:</strong> MyCoin is engineered strictly as a closed-loop reputation and gaming utility token.</p>
+</li>
+<li>
+<p>🚫 <strong>No Cash-Out &amp; No Fiat Off-Ramps:</strong> There is no fiat exchange, no cash-out mechanism, and no real-money trading, avoiding Indian Virtual Digital Asset (VDA) 30% tax/PMLA regulations and Discord ToS gaming violations.</p>
+</li>
+<li>
+<p>🔒 <strong>Zero-PII Compliance:</strong> No emails, names, or phone numbers are ever stored in plaintext, ensuring total compliance with global data privacy standards (GDPR / DPDP).</p>
+</li>
+</ul>
+<hr />
+<h2>12. 🗺️ Phased Implementation Roadmap</h2>
+
+<div class="terminal-window">
+  <div class="terminal-bar">
+    <div class="terminal-dots">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+    </div>
+    <div class="terminal-title">🗺️ Phased Implementation & Verification Roadmap</div>
+    <div class="terminal-actions">UTF-8 SPEC</div>
+  </div>
+  <pre class="terminal-pre"><code>[Phase 1: Cryptographic Engine (Local Python Tests)] ◄── CURRENT STATUS: STEP 1.1 <span class="pill pill-green">VERIFIED</span>!
+  • Step 1.1: Canonical packaging (`MYCOIN_TX_V1:`) &amp; Ed25519 signing (<span class="pill pill-green">PASSED</span>).
+  • Step 1.2: Merkle Tree generation &amp; branch inclusion proofs.
+  • Step 1.3: Cuckoo Cycle puzzle verification benchmark (&lt;0.2 ms).
+        │
+        ▼
+[Phase 2: Interactive Visual Test Bench &amp; Local Ledger]
+  • `visual_testbench.html`: Interactive web dashboard to test wallets, tamper detection, and Merkle proofs.
+  • SQLite schema creation with Lazy Merkle Claim verification.
+        │
+        ▼
+[Phase 3: Cloudflare Edge Gate &amp; Sequencer]
+  • Worker routing, Turnstile verification, and Durable Object single-threaded queue.
+        │
+        ▼
+[Phase 4: Web Wallet &amp; Browser Miner]
+  • Standalone HTML/JS web wallet with Passkeys &amp; WASM Cuckoo miner.
+        │
+        ▼
+[Phase 5: Discord &amp; Telegram Bot Connections]
+  • Interactions webhooks for `/balance`, `/pay`, and `/mine`.
+        │
+        ▼
+[Phase 6: Public Explorer &amp; Bitcoin Anchoring]
+  • Cloudflare Cron Trigger exporting snapshots to GitHub Pages and Bitcoin OpenTimestamps.
+</code></pre>
+</div>
+
+</div>
+
+<div class="footer-note">
+  🪙 <strong>MyCoin Protocol Specification (v4.0)</strong> • Open Research & Architecture • Strictly $0/Month Hosting Forever
+</div>
+
+</body>
+</html>

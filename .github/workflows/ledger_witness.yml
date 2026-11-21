@@ -1,0 +1,41 @@
+name: Quettabyte Ledger Public Witness & Audit
+
+on:
+  schedule:
+    # Run every 6 hours automatically
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Cryptographic Auditor Dependencies
+        run: pip install cryptography
+
+      - name: Run Independent Cryptographic Audit & Replay
+        run: |
+          python scripts/audit_and_replay.py https://mycoin-core.gusainlabs.workers.dev/api/ledger/export
+
+      - name: Save Canonical Ledger Snapshot
+        run: |
+          mkdir -p ledger
+          curl -s https://mycoin-core.gusainlabs.workers.dev/api/ledger/export > ledger/latest.json
+
+      - name: Commit Verified Ledger Witness Snapshot
+        run: |
+          git config --global user.name "Quettabyte Ledger Witness"
+          git config --global user.email "witness@quettabyte.network"
+          git add ledger/latest.json disaster_recovery.db
+          git diff --quiet && git diff --staged --quiet || (git commit -m "⛓️ [WITNESS] Notarized QBC Ledger Snapshot [skip ci]" && git push)

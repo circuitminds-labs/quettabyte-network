@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Cloudflare & Wrangler build outputs
+.wrangler/
+dist/
+.dev.vars
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+disaster_recovery.db

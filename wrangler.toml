@@ -1,0 +1,29 @@
+name = "mycoin-core"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Object bindings
+[durable_objects]
+bindings = [
+  { name = "SEQUENCER", class_name = "SequencerDO" }
+]
+
+# SQLite in Durable Objects migration tag
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SequencerDO"]
+
+# Hourly Bitcoin OTS Merkle Anchor Cron Trigger
+[triggers]
+crons = ["0 * * * *"]
+
+[dev]
+ip = "0.0.0.0"
+port = 8787
+local_protocol = "http"
+
+[vars]
+ENVIRONMENT = "production"
+TOKEN_BUCKET_CAPACITY = "5"
+TOKEN_BUCKET_REFILL_SECONDS = "120"

@@ -1,0 +1,2100 @@
+export const WALLET_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quettabyte Coin (QBC) | Planetary Scale Cryptographic Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --card-bg: #141418;
+      --card-elevated: #1c1c22;
+      --card-hover: #22222a;
+      --border: #23232b;
+      --border-subtle: #1c1c24;
+      --accent: #10b981;
+      --accent-soft: rgba(16, 185, 129, 0.12);
+      --text: #ffffff;
+      --text-secondary: #9e9ea7;
+      --text-muted: #656570;
+      --danger: #ef4444;
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-full: 9999px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 84px; /* space for mobile bottom nav */
+    }
+
+    /* Top Navigation (Mobile Header) */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10, 10, 12, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .top-nav-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+      color: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-name {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+
+    .network-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* Main Content App Shell */
+    .app-shell {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px;
+      flex: 1;
+    }
+
+    .page-tab {
+      display: none;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .page-tab.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    /* Hero Balance Card (Cash App / Apple Pay style) */
+    .hero-card {
+      text-align: center;
+      padding: 36px 20px 28px 20px;
+      background: linear-gradient(180deg, #18181f 0%, #121216 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 260px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .balance-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+
+    .balance-display {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      color: #ffffff;
+      line-height: 1.1;
+      margin-bottom: 4px;
+      font-feature-settings: "tnum";
+    }
+
+    .balance-symbol {
+      color: var(--text-muted);
+      font-size: 32px;
+      font-weight: 600;
+    }
+
+    .balance-micro {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    /* Big Circular Action Buttons (Revolut / Spotify / Cash App) */
+    .action-pill-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .action-circle {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--radius-full);
+      background: #ffffff;
+      color: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .action-btn-item:active .action-circle { transform: scale(0.92); }
+    .action-btn-item:hover .action-circle { background: #f0f0f2; }
+
+    .action-circle.dark {
+      background: var(--card-elevated);
+      color: #ffffff;
+      border: 1px solid var(--border);
+    }
+    .action-circle.dark:hover { background: var(--card-hover); }
+
+    .action-circle.accent {
+      background: var(--accent);
+      color: #000000;
+    }
+    .action-circle.accent:hover { filter: brightness(1.1); }
+
+    .action-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Address Pill Block */
+    .address-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+    .address-card:hover { border-color: var(--text-muted); }
+
+    .address-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .address-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .address-hash {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-chip {
+      background: var(--card-elevated);
+      color: var(--text);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    .copy-chip:hover { background: var(--card-hover); color: #fff; }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 24px 0 12px 0;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .section-link {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .section-link:hover { color: #fff; }
+
+    /* Activity Feed Items (Spotify / Venmo / Cash App style) */
+    .activity-list {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .activity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background-color 0.15s ease;
+      cursor: pointer;
+    }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-row:hover { background-color: var(--card-hover); }
+
+    .activity-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--card-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.in { background: var(--accent-soft); color: var(--accent); }
+    .activity-icon.out { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
+    .activity-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .activity-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .activity-amount {
+      text-align: right;
+      font-weight: 700;
+      font-size: 14.5px;
+      font-feature-settings: "tnum";
+    }
+    .activity-amount.positive { color: var(--accent); }
+    .activity-amount.negative { color: #fff; }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .input-box {
+      width: 100%;
+      background: var(--card-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      color: #fff;
+      font-size: 15px;
+      font-family: var(--font-main);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .input-box:focus { border-color: #ffffff; }
+    .input-box::placeholder { color: var(--text-muted); }
+
+    .preset-chips {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      background: var(--card-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip:hover {
+      color: #fff;
+      border-color: var(--text-muted);
+    }
+
+    
+    /* 12-Word Recovery Phrase Grid */
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .word-chip {
+      background: var(--card-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 8px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding-left: 12px;
+    }
+    .word-num {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      width: 18px;
+      text-align: right;
+    }
+
+    /* Primary CTA Button */
+    .cta-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--radius-full);
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      margin-top: 8px;
+    }
+    .cta-btn:hover { background: #f0f0f2; }
+    .cta-btn:active { transform: scale(0.98); }
+
+    /* Bottom Navigation Bar (Instagram / YouTube / Spotify Mobile Style) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(14, 14, 18, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .bottom-nav-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 12px 14px 12px;
+    }
+
+    .nav-tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      transition: color 0.15s ease;
+      text-decoration: none;
+    }
+
+    .nav-tab-item svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .nav-tab-item span {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .nav-tab-item:hover { color: #fff; }
+    .nav-tab-item.active {
+      color: #ffffff;
+    }
+    .nav-tab-item.active svg {
+      stroke: #ffffff;
+      fill: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Miner Card (Clean Spotify-like Player Aesthetic) */
+    .miner-player {
+      background: linear-gradient(180deg, #181820 0%, #101014 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .miner-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      margin: 0 auto 20px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    .miner-ring.spinning {
+      animation: spin 1.5s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .miner-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .miner-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 380px;
+      margin: 0 auto 24px auto;
+    }
+
+    .miner-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .miner-stat-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .miner-stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .miner-stat-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+      font-feature-settings: "tnum";
+    }
+
+    /* Toast Notification (Instagram / YouTube pill style) */
+    #toast-banner {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(255, 255, 255, 0.95);
+      color: #000000;
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 1000;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #toast-banner.show { transform: translateX(-50%) translateY(0); }
+
+    /* Bottom Sheet Modal */
+    .sheet-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    @media (min-width: 600px) {
+      .sheet-backdrop { align-items: center; }
+    }
+    .sheet-backdrop.open { display: flex; }
+
+    .bottom-sheet {
+      background: #16161c;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      max-width: 520px;
+      width: 100%;
+      padding: 24px;
+      animation: sheetUp 0.25s ease-out;
+    }
+    @media (min-width: 600px) {
+      .bottom-sheet { border-radius: var(--radius-lg); }
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       DESKTOP PRO TRADING & SOCIAL LAYOUT (Twitter / Phantom / Uniswap Style)
+       ========================================================================== */
+    .desktop-layout-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .desktop-nav-col,
+    .desktop-widget-col {
+      display: none;
+    }
+
+    @media (min-width: 900px) {
+      body {
+        padding-bottom: 0 !important;
+        background: #08090d;
+      }
+
+      .top-nav {
+        display: none !important;
+      }
+
+      .bottom-nav {
+        display: none !important;
+      }
+
+      .desktop-layout-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 28px 24px;
+        width: 100%;
+      }
+
+      /* 1. LEFT NAVIGATION COLUMN (Twitter / Linear / Spotify Desktop Rail) */
+      .desktop-nav-col {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 250px;
+        position: sticky;
+        top: 28px;
+        height: calc(100vh - 56px);
+        flex-shrink: 0;
+      }
+
+      .dt-brand-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        margin-bottom: 24px;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .dt-brand-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        background: #ffffff;
+        color: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+        box-shadow: 0 4px 16px rgba(255,255,255,0.15);
+      }
+
+      .dt-brand-title {
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+
+      .dt-brand-sub {
+        font-size: 11.5px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .desktop-nav-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .desktop-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        border-radius: var(--radius-full);
+        font-size: 14.5px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: transparent;
+        border: none;
+        text-align: left;
+        width: 100%;
+      }
+
+      .desktop-nav-item svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .desktop-nav-item:hover {
+        color: #ffffff;
+        background: var(--card-hover);
+      }
+
+      .desktop-nav-item.active {
+        color: #ffffff;
+        background: #ffffff;
+        color: #000000;
+        font-weight: 700;
+      }
+      .desktop-nav-item.active svg {
+        stroke: #000000;
+      }
+
+      .dt-account-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+      }
+
+      /* 2. CENTER STAGE (Main Content Viewport) */
+      .app-shell {
+        max-width: 660px;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        flex: 1;
+      }
+
+      /* 3. RIGHT INTELLIGENCE COLUMN (Uniswap / Coinbase / Twitter Stats Rail) */
+      .desktop-widget-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 320px;
+        position: sticky;
+        top: 28px;
+        height: calc(100vh - 56px);
+        flex-shrink: 0;
+        overflow-y: auto;
+      }
+
+      .widget-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+      }
+
+      .widget-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .widget-metric-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 12.5px;
+      }
+      .widget-metric-row:last-child { border-bottom: none; }
+      .widget-metric-row .label { color: var(--text-secondary); }
+      .widget-metric-row .val { font-weight: 700; color: #fff; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE TOP HEADER (<900px) -->
+  <header class="top-nav">
+    <div class="top-nav-inner">
+      <a href="#" class="brand">
+        <div class="brand-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: #000; font-family: var(--font-mono); font-size: 19px; font-weight: 900;">Q</div>
+        <span class="brand-name">Quetta<span style="color: var(--accent);">byte</span></span>
+      </a>
+
+      <div class="network-badge">
+        <span class="dot"></span>
+        <span>Zero Cost • Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- UNIFIED DESKTOP & MOBILE WORKSPACE WRAPPER -->
+  <div class="desktop-layout-wrapper">
+
+    <!-- 1. DESKTOP LEFT NAVIGATION RAIL (>=900px, Twitter/Linear/Phantom style) -->
+    <aside class="desktop-nav-col">
+      <div>
+        <a href="#" class="dt-brand-box">
+          <div class="dt-brand-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: #000; font-family: var(--font-mono); font-size: 20px; font-weight: 900;">Q</div>
+          <div>
+            <div class="dt-brand-title">Quettabyte Coin</div>
+            <div class="dt-brand-sub">● QBC Mainnet (10³⁰)</div>
+          </div>
+        </a>
+
+        <div class="desktop-nav-menu">
+          <button class="desktop-nav-item active" onclick="switchTab('home')">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Portfolio</span>
+          </button>
+
+          <button class="desktop-nav-item" onclick="switchTab('send')">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <span>Send & Pay</span>
+          </button>
+
+          <button class="desktop-nav-item" onclick="switchTab('earn')">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>Community Mine</span>
+          </button>
+
+          <button class="desktop-nav-item" onclick="switchTab('activity')">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <span>Ledger Explorer</span>
+          </button>
+
+          <button class="desktop-nav-item" onclick="switchTab('profile')">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Identity & Trust</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dt-account-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="user-avatar" id="dtAvatarLetter">A</div>
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: #fff;">My Wallet</div>
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);" id="dtShortAddress">0x...</div>
+            </div>
+          </div>
+          <button class="copy-chip" onclick="copyAddress()">Copy</button>
+        </div>
+
+        <button class="cta-btn" onclick="claimFaucet()" style="padding: 10px; font-size: 13px; margin-top: 4px; background: var(--accent); color: #000;">
+          +10 QBC Faucet Coins
+        </button>
+      </div>
+    </aside>
+
+    <!-- 2. CENTER MAIN STAGE (Mobile & Desktop Shared Core) -->
+    <main class="app-shell">
+
+      <!-- 1. HOME / WALLET TAB -->
+      <div id="tab-home" class="page-tab active">
+        <!-- Hero Balance -->
+        <div class="hero-card">
+          <div class="balance-label">Total Balance</div>
+          <div class="balance-display">
+            <span id="homeBalance">0.00</span>
+            <span class="balance-symbol" style="color: var(--accent); font-size: 24px; font-weight: 800; font-family: var(--font-mono); margin-left: 6px;">QBC</span>
+          </div>
+          <div class="balance-micro">
+            <span id="homeMicro">0</span> quettabits (micro-units) • Zero Gas
+          </div>
+
+          <div class="action-pill-row">
+            <div class="action-btn-item" onclick="openSendSheet()">
+              <div class="action-circle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+              </div>
+              <span class="action-label">Send</span>
+            </div>
+
+            <div class="action-btn-item" onclick="openReceiveSheet()">
+              <div class="action-circle dark">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+              </div>
+              <span class="action-label">Receive</span>
+            </div>
+
+            <div class="action-btn-item" onclick="claimFaucet()">
+              <div class="action-circle accent">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <span class="action-label">+10 QBC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Address Card -->
+        <div class="address-card">
+          <div class="address-left" onclick="copyAddress()" style="cursor: pointer; flex: 1;">
+            <div class="user-avatar" id="avatarLetter">A</div>
+            <div>
+              <div class="address-title">My Account Address</div>
+              <div class="address-hash" id="homeShortAddress">Loading wallet...</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <div class="copy-chip" onclick="copyAddress()">Copy</div>
+            <div class="copy-chip" onclick="openBackupSheet()" style="background: rgba(16, 185, 129, 0.15); color: var(--accent); border-color: rgba(16, 185, 129, 0.3);">🔑 Backup</div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="section-header">
+          <span class="section-title">Recent Activity</span>
+          <span class="section-link" onclick="loadActivity()">Refresh</span>
+        </div>
+
+        <div class="activity-list" id="activityList">
+          <div style="padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
+            No transactions yet. Tap "+10 QBC" to fund your wallet!
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. TRANSFER TAB -->
+      <div id="tab-send" class="page-tab">
+        <div class="card">
+          <h2 style="font-size: 20px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 4px;">Send Coins</h2>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Transfer coins instantly to anyone with zero transaction fees.</p>
+
+          <div class="form-group">
+            <div class="input-label">
+              <span>Recipient Public Key</span>
+              <span style="color: var(--accent); cursor: pointer;" onclick="useDemoRecipient()">Paste Test Address</span>
+            </div>
+            <input type="text" class="input-box" id="sendAddressInput" placeholder="Enter 64-character address">
+          </div>
+
+          <div class="form-group">
+            <div class="input-label">
+              <span>Amount</span>
+              <span style="color: var(--text-muted);">Available: <strong id="sendAvailable" style="color: #fff;">0.00</strong> QBC</span>
+            </div>
+            <input type="number" step="0.000001" class="input-box" id="sendAmountInput" placeholder="0.00">
+
+            <div class="preset-chips">
+              <span class="chip" onclick="setSendAmount(0.5)">0.5</span>
+              <span class="chip" onclick="setSendAmount(1.0)">1.0</span>
+              <span class="chip" onclick="setSendAmount(5.0)">5.0</span>
+              <span class="chip" onclick="setSendPercent(1.0)">Max</span>
+            </div>
+          </div>
+
+          <div style="background: var(--card-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 24px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">Transfer Fee</span>
+              <strong style="color: var(--accent);">0.00 QBC (Free)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Speed</span>
+              <span style="color: #fff;">Instant (~0.05s)</span>
+            </div>
+          </div>
+
+          <button class="cta-btn" id="confirmSendBtn" onclick="submitTransfer()">
+            Confirm & Send Payment
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. EARN / MINE TAB (Spotify-inspired background compute) -->
+      <div id="tab-earn" class="page-tab">
+        <div class="miner-player">
+          <div class="miner-ring" id="minerRing">⛏️</div>
+          <h2 class="miner-title" id="minerTitle">Community Compute</h2>
+          <p class="miner-sub">Run simple memory verification on your device to secure the network and earn freshly minted coins every hour.</p>
+
+          <div class="miner-stats-row">
+            <div class="miner-stat-box">
+              <div class="miner-stat-label">Speed</div>
+              <div class="miner-stat-val" id="minerSpeed">0 H/s</div>
+            </div>
+            <div class="miner-stat-box">
+              <div class="miner-stat-label">Shares</div>
+              <div class="miner-stat-val" id="minerShares" style="color: var(--accent);">0</div>
+            </div>
+            <div class="miner-stat-box">
+              <div class="miner-stat-label">Earned</div>
+              <div class="miner-stat-val" id="minerEarned" style="color: #fcd34d;">0.00 QBC</div>
+            </div>
+          </div>
+
+          <button class="cta-btn" id="minerBtn" onclick="toggleMining()">
+            Start Earning
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">How Earning Works</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+            Just as Bitcoin represents the fundamental <em>bit</em>, Quettabyte Coin scales value to the <em>quetta</em> (10³⁰ bytes, the largest SI magnitude in science). It operates on a <strong>mobile-friendly memory puzzle</strong>. Your phone evaluates challenges at the same speed as a desktop PC. Verified proofs are sealed directly onto the public ledger.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4. ACTIVITY & EXPLORER TAB -->
+      <div id="tab-activity" class="page-tab">
+        <div class="card" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Ledger Height</div>
+              <div style="font-size: 20px; font-weight: 800; color: #fff;" id="expHeight">Block #0</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; text-align: right;">Circulating</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--accent);" id="expCirculating">0.00 QBC</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bitcoin OpenTimestamps Epoch Anchor Card -->
+        <div class="card" style="padding: 20px; margin-bottom: 16px; border: 1px solid rgba(245, 158, 11, 0.35); background: linear-gradient(180deg, rgba(245, 158, 11, 0.06) 0%, var(--card-bg) 100%);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 16px;">⛓️</span>
+              <strong style="font-size: 14px; color: #f59e0b;">Bitcoin OpenTimestamps Anchor</strong>
+            </div>
+            <span id="otsStatusBadge" style="font-size: 11px; font-weight: 700; color: #f59e0b; background: rgba(245, 158, 11, 0.18); padding: 3px 10px; border-radius: var(--radius-full); text-transform: uppercase;">SUBMITTED</span>
+          </div>
+
+          <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
+            Hourly Merkle roots are cryptographically notarized onto the Bitcoin blockchain. Operator fraud is mathematically impossible to conceal.
+          </div>
+
+          <div style="background: var(--card-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+              <span style="color: var(--text-muted);">Current Epoch</span>
+              <strong id="otsEpochId" style="color: #fff;">Epoch #1</strong>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Epoch Merkle Root:</div>
+            <div id="otsMerkleRoot" style="font-family: var(--font-mono); font-size: 11px; color: #fff; word-break: break-all; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 6px;">00000000...</div>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button class="cta-btn" onclick="manualSettleEpoch()" style="padding: 10px 14px; font-size: 12.5px; background: #f59e0b; color: #000; margin-top: 0; flex: 1;">
+              ⚡ Anchor Epoch to Bitcoin Now
+            </button>
+            <button class="chip" onclick="loadEpochInfo()" style="padding: 10px 14px; margin-top: 0;">
+              Refresh Receipt
+            </button>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <a href="/api/ledger/export" target="_blank" class="chip" style="display: block; text-align: center; text-decoration: none; padding: 8px 12px; font-size: 11.5px; background: var(--card-elevated); color: var(--text-secondary); border: 1px solid var(--border);">
+              📜 Download Canonical Ledger DAG Export (.json)
+            </a>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <span class="section-title">Network Activity Stream</span>
+          <span class="section-link" onclick="loadGlobalLedger()">Refresh</span>
+        </div>
+
+        <div class="activity-list" id="globalLedgerList">
+          <div style="padding: 24px; text-align: center; color: var(--text-muted);">Loading blocks...</div>
+        </div>
+      </div>
+
+      <!-- 5. ACCOUNT / PROFILE TAB -->
+      <div id="tab-profile" class="page-tab">
+        <div class="card">
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+            <div class="user-avatar" style="width: 50px; height: 50px; font-size: 20px;">👤</div>
+            <div>
+              <h2 style="font-size: 18px; font-weight: 800;">My Account</h2>
+              <div style="font-size: 12.5px; color: var(--accent); font-weight: 600;" id="profileTier">Casual Citizen (Tier 1)</div>
+            </div>
+          </div>
+
+          <div style="background: var(--card-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+              <span style="color: var(--text-secondary);">Trust Score</span>
+              <strong id="profileScore">25 / 100</strong>
+            </div>
+            <div style="height: 6px; background: var(--border); border-radius: var(--radius-full); overflow: hidden;">
+              <div id="profileProgress" style="width: 25%; height: 100%; background: var(--accent);"></div>
+            </div>
+          </div>
+
+          <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #fff;">Connected Verifications</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="font-size: 13px; font-weight: 600;">Google Account</div>
+              <button class="chip" onclick="linkSocial('GOOGLE')">Connect (+25)</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="font-size: 13px; font-weight: 600;">Telegram Phone ($0 SMS)</div>
+              <button class="chip" onclick="linkSocial('TELEGRAM_PHONE')">Verify (+35)</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="font-size: 13px; font-weight: 600;">Biometric Passkey</div>
+              <button class="chip" onclick="linkSocial('PASSKEY')">Register (+15)</button>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
+            <button class="cta-btn" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0;" onclick="openBackupSheet()">
+              🔑 View 12-Word Secret Recovery Phrase
+            </button>
+            <button class="cta-btn" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0;" onclick="openImportSheet()">
+              📥 Import / Recover Existing Wallet
+            </button>
+            <button class="cta-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); margin-top: 0;" onclick="confirmResetWallet()">
+              ⚠️ Reset & Create Brand New Wallet
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- 3. DESKTOP RIGHT INTELLIGENCE COLUMN (>=900px, Uniswap/Coinbase stats style) -->
+    <aside class="desktop-widget-col">
+      <!-- Network Telemetry -->
+      <div class="widget-card">
+        <div class="widget-title">
+          <span>⚡ Network Vitals</span>
+          <span style="font-size: 11px; color: var(--accent); font-weight: 600;">Mainnet v4</span>
+        </div>
+
+        <div class="widget-metric-row">
+          <span class="label">Ledger Height</span>
+          <span class="val" id="dtExpHeight">Block #0</span>
+        </div>
+        <div class="widget-metric-row">
+          <span class="label">Circulating Supply</span>
+          <span class="val" id="dtExpCirculating" style="color: var(--accent);">0.00 QBC</span>
+        </div>
+        <div class="widget-metric-row">
+          <span class="label">Network Gas Fee</span>
+          <span class="val" style="color: var(--accent);">$0.00 (Zero Fee)</span>
+        </div>
+        <div class="widget-metric-row">
+          <span class="label">Settlement Engine</span>
+          <span class="val">SQLite DO (&lt;0.2ms)</span>
+        </div>
+        <div class="widget-metric-row">
+          <span class="label">Bitcoin OTS Proofs</span>
+          <span class="val" id="dtOtsStatus" style="color: #f59e0b;">Hourly Anchor</span>
+        </div>
+        <div class="widget-metric-row">
+          <span class="label">Latest Epoch Root</span>
+          <span class="val" id="dtEpochRootShort" style="font-family: var(--font-mono); font-size: 11px;">Pending...</span>
+        </div>
+      </div>
+
+      <!-- Quick Background Miner Widget -->
+      <div class="widget-card">
+        <div class="widget-title">
+          <span>⛏️ Compute Station</span>
+          <span id="dtMinerStatusBadge" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Idle</span>
+        </div>
+
+        <div class="widget-metric-row">
+          <span class="label">Compute Speed</span>
+          <span class="val" id="dtMinerSpeed">0 H/s</span>
+        </div>
+        <div class="widget-metric-row">
+          <span class="label">Accepted Shares</span>
+          <span class="val" id="dtMinerShares" style="color: var(--accent);">0</span>
+        </div>
+
+        <button class="cta-btn" id="dtMinerBtn" onclick="toggleMining()" style="margin-top: 14px; padding: 10px; font-size: 13px;">
+          Start Mining
+        </button>
+      </div>
+
+      <!-- Sybil Trust Tier Matrix -->
+      <div class="widget-card">
+        <div class="widget-title">
+          <span>🛡️ Trust Tier Status</span>
+          <span id="dtTierBadge" style="font-size: 11px; color: var(--accent); font-weight: 600;">Tier 1</span>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+            <span style="color: var(--text-secondary);" id="dtTierName">Casual Citizen</span>
+            <strong id="dtScoreVal">25 / 100</strong>
+          </div>
+          <div style="height: 5px; background: var(--border); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="dtScoreProgress" style="width: 25%; height: 100%; background: var(--accent);"></div>
+          </div>
+        </div>
+
+        <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;">
+          ✓ Unlimited fee-free inbound receiving<br>
+          ✓ Outbound transfers active (5 tx/hr)<br>
+          ✓ 100% Non-custodial WebCrypto security
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+    <!-- BACKUP 12-WORD MNEMONIC MODAL SHEET -->
+  <div class="sheet-backdrop" id="backupSheet" onclick="closeSheet(event, 'backupSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 style="font-size: 18px; font-weight: 800;">Secret Recovery Phrase</h3>
+        <span style="font-size: 11px; font-weight: 700; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 3px 8px; border-radius: var(--radius-full);">BIP-39</span>
+      </div>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
+        Write down these 12 words in order. Never share them with anyone. Anyone who knows this phrase can control your funds from any device.
+      </p>
+
+      <div class="word-grid" id="mnemonicWordGrid">
+        <!-- 12 words populated dynamically -->
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="cta-btn" onclick="copyMnemonicPhrase()" style="background: var(--accent); color: #000; margin-top: 0; flex: 1;">
+          Copy 12 Words
+        </button>
+        <button class="cta-btn" onclick="document.getElementById('backupSheet').classList.remove('open')" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0; width: auto; padding: 0 20px;">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT / RESTORE WALLET MODAL SHEET -->
+  <div class="sheet-backdrop" id="importSheet" onclick="closeSheet(event, 'importSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Import Existing Wallet</h3>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
+        Restore your wallet on this device by pasting your 12-word recovery phrase (separated by spaces) or a 64-character private key hex.
+      </p>
+
+      <div class="form-group">
+        <textarea id="importMnemonicInput" class="input-box" rows="3" placeholder="Enter your 12 words separated by spaces..." style="resize: none; font-family: var(--font-mono); font-size: 13px;"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="cta-btn" onclick="submitImportWallet()" style="background: #ffffff; color: #000; margin-top: 0; flex: 1;">
+          Restore Wallet Now
+        </button>
+        <button class="cta-btn" onclick="document.getElementById('importSheet').classList.remove('open')" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0; width: auto; padding: 0 20px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIVE MODAL SHEET -->
+  <div class="sheet-backdrop" id="receiveSheet" onclick="closeSheet(event, 'receiveSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Receive Coins</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Share your public key address to receive fee-free transfers from any device.</p>
+
+      <div style="background: #ffffff; padding: 20px; border-radius: var(--radius-md); text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 48px; margin-bottom: 8px;">📱</div>
+        <div style="font-size: 11.5px; font-family: var(--font-mono); color: #000; word-break: break-all;" id="receiveFullAddress">Generating...</div>
+      </div>
+
+      <button class="cta-btn" onclick="copyAddress()">Copy Address</button>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAVIGATION (<900px, YouTube / Instagram / Spotify Layout) -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="nav-tab-item active" onclick="switchTab('home')">
+        <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Home</span>
+      </button>
+
+      <button class="nav-tab-item" onclick="switchTab('send')">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <span>Pay</span>
+      </button>
+
+      <button class="nav-tab-item" onclick="switchTab('earn')">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span>Earn</span>
+      </button>
+
+      <button class="nav-tab-item" onclick="switchTab('activity')">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        <span>Ledger</span>
+      </button>
+
+      <button class="nav-tab-item" onclick="switchTab('profile')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- POPUP TOAST -->
+  <div id="toast-banner">
+    <span id="toastIcon">✓</span>
+    <span id="toastText">Action completed</span>
+  </div>
+
+  <script>
+    let keyPair = null;
+    let publicKeyHex = '';
+    let currentNonce = 0;
+    let balanceMicro = 0n;
+    let chainHead = '0000000000000000000000000000000000000000000000000000000000000000';
+    let isMining = false;
+    let miningTimer = null;
+    let currentTicket = 1;
+    let minedSharesCount = 0;
+    let minedCoinsSum = 0;
+
+    const API_URL = \`\${window.location.origin}/api\`;
+
+    function showBanner(text, icon = '✓') {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toastText').textContent = text;
+      document.getElementById('toastIcon').textContent = icon;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 2800);
+    }
+
+    function bytesToHex(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function copyAddress() {
+      if (publicKeyHex) {
+        navigator.clipboard.writeText(publicKeyHex);
+        showBanner('Address copied to clipboard!');
+      }
+    }
+
+    function switchTab(name) {
+      // Sync Mobile Nav
+      document.querySelectorAll('.nav-tab-item').forEach(b => b.classList.remove('active'));
+      const activeMobileBtn = Array.from(document.querySelectorAll('.nav-tab-item')).find(b => b.getAttribute('onclick')?.includes(name));
+      if (activeMobileBtn) activeMobileBtn.classList.add('active');
+
+      // Sync Desktop Nav
+      document.querySelectorAll('.desktop-nav-item').forEach(b => b.classList.remove('active'));
+      const activeDesktopBtn = Array.from(document.querySelectorAll('.desktop-nav-item')).find(b => b.getAttribute('onclick')?.includes(name));
+      if (activeDesktopBtn) activeDesktopBtn.classList.add('active');
+
+      // Switch Main Tab
+      document.querySelectorAll('.page-tab').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(\`tab-\${name}\`);
+      if (target) target.classList.add('active');
+
+      if (name === 'home') refreshState();
+      if (name === 'activity') {
+        loadGlobalLedger();
+        loadEpochInfo();
+      }
+    }
+
+    function openSendSheet() { switchTab('send'); }
+    function openReceiveSheet() { document.getElementById('receiveSheet').classList.add('open'); }
+    function closeSheet(e, id) { if (e.target.id === id) document.getElementById(id).classList.remove('open'); }
+
+    
+    const BIP39_WORDLIST_RAW = "abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add addict address adjust admit adult advance advice aerobic affair afford afraid again age agent agree ahead aim air airport aisle alarm album alcohol alert alien all alley allow almost alone alpha already also alter always amateur amazing among amount amused analyst anchor ancient anger angle angry animal ankle announce annual another answer antenna antique anxiety any apart apology appear apple approve april arch arctic area arena argue arm armed armor army around arrange arrest arrive arrow art artefact artist artwork ask aspect assault asset assist assume asthma athlete atom attack attend attitude attract auction audit august aunt author auto autumn average avocado avoid awake aware away awesome awful awkward axis baby bachelor bacon badge bag balance balcony ball bamboo banana banner bar barely bargain barrel base basic basket battle beach bean beauty because become beef before begin behave behind believe below belt bench benefit best betray better between beyond bicycle bid bike bind biology bird birth bitter black blade blame blanket blast bleak bless blind blood blossom blouse blue blur blush board boat body boil bomb bone bonus book boost border boring borrow boss bottom bounce box boy bracket brain brand brass brave bread breeze brick bridge brief bright bring brisk broccoli broken bronze broom brother brown brush bubble buddy budget buffalo build bulb bulk bullet bundle bunker burden burger burst bus business busy butter buyer buzz cabbage cabin cable cactus cage cake call calm camera camp can canal cancel candy cannon canoe canvas canyon capable capital captain car carbon card cargo carpet carry cart case cash casino castle casual cat catalog catch category cattle caught cause caution cave ceiling celery cement census century cereal certain chair chalk champion change chaos chapter charge chase chat cheap check cheese chef cherry chest chicken chief child chimney choice choose chronic chuckle chunk churn cigar cinnamon circle citizen city civil claim clap clarify claw clay clean clerk clever click client cliff climb clinic clip clock clog close cloth cloud clown club clump cluster clutch coach coast coconut code coffee coil coin collect color column combine come comfort comic common company concert conduct confirm congress connect consider control convince cook cool copper copy coral core corn correct cost cotton couch country couple course cousin cover coyote crack cradle craft cram crane crash crater crawl crazy cream credit creek crew cricket crime crisp critic crop cross crouch crowd crucial cruel cruise crumble crunch crush cry crystal cube culture cup cupboard curious current curtain curve cushion custom cute cycle dad damage damp dance danger daring dash daughter dawn day deal debate debris decade december decide decline decorate decrease deer defense define defy degree delay deliver demand demise denial dentist deny depart depend deposit depth deputy derive describe desert design desk despair destroy detail detect develop device devote diagram dial diamond diary dice diesel diet differ digital dignity dilemma dinner dinosaur direct dirt disagree discover disease dish dismiss disorder display distance divert divide divorce dizzy doctor document dog doll dolphin domain donate donkey donor door dose double dove draft dragon drama drastic draw dream dress drift drill drink drip drive drop drum dry duck dumb dune during dust dutch duty dwarf dynamic eager eagle early earn earth easily east easy echo ecology economy edge edit educate effort egg eight either elbow elder electric elegant element elephant elevator elite else embark embody embrace emerge emotion employ empower empty enable enact end endless endorse enemy energy enforce engage engine enhance enjoy enlist enough enrich enroll ensure enter entire entry envelope episode equal equip era erase erode erosion error erupt escape essay essence estate eternal ethics evidence evil evoke evolve exact example excess exchange excite exclude excuse execute exercise exhaust exhibit exile exist exit exotic expand expect expire explain expose express extend extra eye eyebrow fabric face faculty fade faint faith fall false fame family famous fan fancy fantasy farm fashion fat fatal father fatigue fault favorite feature february federal fee feed feel female fence festival fetch fever few fiber fiction field figure file film filter final find fine finger finish fire firm first fiscal fish fit fitness fix flag flame flash flat flavor flee flight flip float flock floor flower fluid flush fly foam focus fog foil fold follow food foot force forest forget fork fortune forum forward fossil foster found fox fragile frame frequent fresh friend fringe frog front frost frown frozen fruit fuel fun funny furnace fury future gadget gain galaxy gallery game gap garage garbage garden garlic garment gas gasp gate gather gauge gaze general genius genre gentle genuine gesture ghost giant gift giggle ginger giraffe girl give glad glance glare glass glide glimpse globe gloom glory glove glow glue goat goddess gold good goose gorilla gospel gossip govern gown grab grace grain grant grape grass gravity great green grid grief grit grocery group grow grunt guard guess guide guilt guitar gun gym habit hair half hammer hamster hand happy harbor hard harsh harvest hat have hawk hazard head health heart heavy hedgehog height hello helmet help hen hero hidden high hill hint hip hire history hobby hockey hold hole holiday hollow home honey hood hope horn horror horse hospital host hotel hour hover hub huge human humble humor hundred hungry hunt hurdle hurry hurt husband hybrid ice icon idea identify idle ignore ill illegal illness image imitate immense immune impact impose improve impulse inch include income increase index indicate indoor industry infant inflict inform inhale inherit initial inject injury inmate inner innocent input inquiry insane insect inside inspire install intact interest into invest invite involve iron island isolate issue item ivory jacket jaguar jar jazz jealous jeans jelly jewel job join joke journey joy judge juice jump jungle junior junk just kangaroo keen keep ketchup key kick kid kidney kind kingdom kiss kit kitchen kite kitten kiwi knee knife knock know lab label labor ladder lady lake lamp language laptop large later latin laugh laundry lava law lawn lawsuit layer lazy leader leaf learn leave lecture left leg legal legend leisure lemon lend length lens leopard lesson letter level liar liberty library license life lift light like limb limit link lion liquid list little live lizard load loan lobster local lock logic lonely long loop lottery loud lounge love loyal lucky luggage lumber lunar lunch luxury lyrics machine mad magic magnet maid mail main major make mammal man manage mandate mango mansion manual maple marble march margin marine market marriage mask mass master match material math matrix matter maximum maze meadow mean measure meat mechanic medal media melody melt member memory mention menu mercy merge merit merry mesh message metal method middle midnight milk million mimic mind minimum minor minute miracle mirror misery miss mistake mix mixed mixture mobile model modify mom moment monitor monkey monster month moon moral more morning mosquito mother motion motor mountain mouse move movie much muffin mule multiply muscle museum mushroom music must mutual myself mystery myth naive name napkin narrow nasty nation nature near neck need negative neglect neither nephew nerve nest net network neutral never news next nice night noble noise nominee noodle normal north nose notable note nothing notice novel now nuclear number nurse nut oak obey object oblige obscure observe obtain obvious occur ocean october odor off offer office often oil okay old olive olympic omit once one onion online only open opera opinion oppose option orange orbit orchard order ordinary organ orient original orphan ostrich other outdoor outer output outside oval oven over own owner oxygen oyster ozone pact paddle page pair palace palm panda panel panic panther paper parade parent park parrot party pass patch path patient patrol pattern pause pave payment peace peanut pear peasant pelican pen penalty pencil people pepper perfect permit person pet phone photo phrase physical piano picnic picture piece pig pigeon pill pilot pink pioneer pipe pistol pitch pizza place planet plastic plate play please pledge pluck plug plunge poem poet point polar pole police pond pony pool popular portion position possible post potato pottery poverty powder power practice praise predict prefer prepare present pretty prevent price pride primary print priority prison private prize problem process produce profit program project promote proof property prosper protect proud provide public pudding pull pulp pulse pumpkin punch pupil puppy purchase purity purpose purse push put puzzle pyramid quality quantum quarter question quick quit quiz quote rabbit raccoon race rack radar radio rail rain raise rally ramp ranch random range rapid rare rate rather raven raw razor ready real reason rebel rebuild recall receive recipe record recycle reduce reflect reform refuse region regret regular reject relax release relief rely remain remember remind remove render renew rent reopen repair repeat replace report require rescue resemble resist resource response result retire retreat return reunion reveal review reward rhythm rib ribbon rice rich ride ridge rifle right rigid ring riot ripple risk ritual rival river road roast robot robust rocket romance roof rookie room rose rotate rough round route royal rubber rude rug rule run runway rural sad saddle sadness safe sail salad salmon salon salt salute same sample sand satisfy satoshi sauce sausage save say scale scan scare scatter scene scheme school science scissors scorpion scout scrap screen script scrub sea search season seat second secret section security seed seek segment select sell seminar senior sense sentence series service session settle setup seven shadow shaft shallow share shed shell sheriff shield shift shine ship shiver shock shoe shoot shop short shoulder shove shrimp shrug shuffle shy sibling sick side siege sight sign silent silk silly silver similar simple since sing siren sister situate six size skate sketch ski skill skin skirt skull slab slam sleep slender slice slide slight slim slogan slot slow slush small smart smile smoke smooth snack snake snap sniff snow soap soccer social sock soda soft solar soldier solid solution solve someone song soon sorry sort soul sound soup source south space spare spatial spawn speak special speed spell spend sphere spice spider spike spin spirit split spoil sponsor spoon sport spot spray spread spring spy square squeeze squirrel stable stadium staff stage stairs stamp stand start state stay steak steel stem step stereo stick still sting stock stomach stone stool story stove strategy street strike strong struggle student stuff stumble style subject submit subway success such sudden suffer sugar suggest suit summer sun sunny sunset super supply supreme sure surface surge surprise surround survey suspect sustain swallow swamp swap swarm swear sweet swift swim swing switch sword symbol symptom syrup system table tackle tag tail talent talk tank tape target task taste tattoo taxi teach team tell ten tenant tennis tent term test text thank that theme then theory there they thing this thought three thrive throw thumb thunder ticket tide tiger tilt timber time tiny tip tired tissue title toast tobacco today toddler toe together toilet token tomato tomorrow tone tongue tonight tool tooth top topic topple torch tornado tortoise toss total tourist toward tower town toy track trade traffic tragic train transfer trap trash travel tray treat tree trend trial tribe trick trigger trim trip trophy trouble truck true truly trumpet trust truth try tube tuition tumble tuna tunnel turkey turn turtle twelve twenty twice twin twist two type typical ugly umbrella unable unaware uncle uncover under undo unfair unfold unhappy uniform unique unit universe unknown unlock until unusual unveil update upgrade uphold upon upper upset urban urge usage use used useful useless usual utility vacant vacuum vague valid valley valve van vanish vapor various vast vault vehicle velvet vendor venture venue verb verify version very vessel veteran viable vibrant vicious victory video view village vintage violin virtual virus visa visit visual vital vivid vocal voice void volcano volume vote voyage wage wagon wait walk wall walnut want warfare warm warrior wash wasp waste water wave way wealth weapon wear weasel weather web wedding weekend weird welcome west wet whale what wheat wheel when where whip whisper wide width wife wild will win window wine wing wink winner winter wire wisdom wise wish witness wolf woman wonder wood wool word work world worry worth wrap wreck wrestle wrist write wrong yard year yellow you young youth zebra zero zone zoo";
+    const BIP39_WORDS = BIP39_WORDLIST_RAW.split(" ");
+    let currentMnemonic = "";
+
+    function openBackupSheet() {
+      const grid = document.getElementById("mnemonicWordGrid");
+      if (grid && currentMnemonic) {
+        grid.innerHTML = "";
+        const mWords = currentMnemonic.trim().split(/\\s+/);
+        mWords.forEach((w, idx) => {
+          const chip = document.createElement("div");
+          chip.className = "word-chip";
+          chip.innerHTML = \`<span class="word-num">\${idx + 1}.</span> <span>\${w}</span>\`;
+          grid.appendChild(chip);
+        });
+      }
+      document.getElementById("backupSheet").classList.add("open");
+    }
+
+    function copyMnemonicPhrase() {
+      if (currentMnemonic) {
+        navigator.clipboard.writeText(currentMnemonic);
+        showBanner("12-word phrase copied to clipboard! Keep it safe.", "🔑");
+      }
+    }
+
+    function openImportSheet() {
+      document.getElementById("importMnemonicInput").value = "";
+      document.getElementById("importSheet").classList.add("open");
+    }
+
+    async function generateBip39Mnemonic() {
+      const entropy = crypto.getRandomValues(new Uint8Array(16));
+      const hash = await crypto.subtle.digest("SHA-256", entropy);
+      const hashBytes = new Uint8Array(hash);
+      const checksum = hashBytes[0] >> 4; // First 4 bits
+
+      let bits = "";
+      for (const b of entropy) {
+        bits += b.toString(2).padStart(8, "0");
+      }
+      bits += checksum.toString(2).padStart(4, "0");
+
+      const mWords = [];
+      for (let i = 0; i < 12; i++) {
+        const idx = parseInt(bits.substr(i * 11, 11), 2);
+        mWords.push(BIP39_WORDS[idx]);
+      }
+      return mWords.join(" ");
+    }
+
+    function base64urlToBytes(base64url) {
+      let b64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    async function deriveKeypairFromSeedBytes(seedBytes) {
+      // RFC 8410 PKCS#8 prefix for Ed25519
+      const prefix = new Uint8Array([0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20]);
+      const pkcs8 = new Uint8Array(48);
+      pkcs8.set(prefix);
+      pkcs8.set(seedBytes, 16);
+
+      const privKey = await crypto.subtle.importKey("pkcs8", pkcs8, { name: "Ed25519" }, true, ["sign"]);
+      const jwk = await crypto.subtle.exportKey("jwk", privKey);
+      const pubBytes = base64urlToBytes(jwk.x);
+      const pubHex = bytesToHex(pubBytes);
+      return { privKey, pubHex, seedHex: bytesToHex(seedBytes) };
+    }
+
+    async function deriveFromMnemonic(mnemonic) {
+      const enc = new TextEncoder().encode(mnemonic.trim().toLowerCase());
+      const hash = await crypto.subtle.digest("SHA-256", enc);
+      return await deriveKeypairFromSeedBytes(new Uint8Array(hash));
+    }
+
+    async function loadOrCreateWallet() {
+      const saved = localStorage.getItem("mycoin_wallet_v1");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.mnemonic) {
+            currentMnemonic = parsed.mnemonic;
+            const derived = await deriveFromMnemonic(parsed.mnemonic);
+            keyPair = { privateKey: derived.privKey, publicKey: null };
+            publicKeyHex = derived.pubHex;
+            setupWalletUI();
+            return;
+          } else if (parsed.seedHex) {
+            const seedBytes = new Uint8Array(parsed.seedHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+            const derived = await deriveKeypairFromSeedBytes(seedBytes);
+            keyPair = { privateKey: derived.privKey, publicKey: null };
+            publicKeyHex = derived.pubHex;
+            setupWalletUI();
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to load saved wallet:", e);
+        }
+      }
+
+      // Otherwise generate brand new BIP-39 wallet
+      await createNewBip39Wallet();
+    }
+
+    async function createNewBip39Wallet() {
+      const mnemonic = await generateBip39Mnemonic();
+      currentMnemonic = mnemonic;
+      const derived = await deriveFromMnemonic(mnemonic);
+      keyPair = { privateKey: derived.privKey, publicKey: null };
+      publicKeyHex = derived.pubHex;
+
+      localStorage.setItem("mycoin_wallet_v1", JSON.stringify({
+        mnemonic: currentMnemonic,
+        seedHex: derived.seedHex,
+        publicKeyHex: derived.pubHex,
+        created_at: Date.now()
+      }));
+
+      setupWalletUI();
+      showBanner("New wallet generated! Remember to backup your 12 words.", "🎉");
+    }
+
+    function setupWalletUI() {
+      const short = publicKeyHex.substring(0, 6) + "..." + publicKeyHex.substring(58);
+      document.getElementById("homeShortAddress").textContent = short;
+      document.getElementById("dtShortAddress").textContent = short;
+      document.getElementById("receiveFullAddress").textContent = publicKeyHex;
+
+      const char = publicKeyHex.charAt(0).toUpperCase();
+      document.getElementById("avatarLetter").textContent = char;
+      document.getElementById("dtAvatarLetter").textContent = char;
+
+      refreshState();
+      loadActivity();
+    }
+
+    async function submitImportWallet() {
+      const input = document.getElementById("importMnemonicInput").value.trim();
+      if (!input) {
+        showBanner("Please enter your 12 words or private key", "⚠️");
+        return;
+      }
+
+      try {
+        let derived;
+        let mnemonicToSave = "";
+        const wordsArr = input.split(/\\s+/);
+
+        if (wordsArr.length === 12) {
+          // Validate 12 words
+          for (const w of wordsArr) {
+            if (!BIP39_WORDS.includes(w.toLowerCase())) {
+              showBanner(\`Invalid word: "\${w}"\`, "❌");
+              return;
+            }
+          }
+          mnemonicToSave = wordsArr.join(" ").toLowerCase();
+          derived = await deriveFromMnemonic(mnemonicToSave);
+        } else if (input.length === 64 && /^[0-9a-fA-F]+$/.test(input)) {
+          const seedBytes = new Uint8Array(input.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+          derived = await deriveKeypairFromSeedBytes(seedBytes);
+        } else {
+          showBanner("Enter exactly 12 words or a 64-char hex key", "⚠️");
+          return;
+        }
+
+        keyPair = { privateKey: derived.privKey, publicKey: null };
+        publicKeyHex = derived.pubHex;
+        currentMnemonic = mnemonicToSave;
+
+        localStorage.setItem("mycoin_wallet_v1", JSON.stringify({
+          mnemonic: currentMnemonic,
+          seedHex: derived.seedHex,
+          publicKeyHex: derived.pubHex,
+          imported_at: Date.now()
+        }));
+
+        setupWalletUI();
+        document.getElementById("importSheet").classList.remove("open");
+        showBanner("Wallet restored successfully!", "🚀");
+        switchTab("home");
+      } catch (err) {
+        showBanner("Import failed: " + err.message, "❌");
+      }
+    }
+
+    function confirmResetWallet() {
+      if (confirm("Are you sure? This will replace your current wallet. Make sure you have backed up your 12 words!")) {
+        createNewBip39Wallet();
+      }
+    }
+
+    // KEYPAIR
+    async function generateNewAccount() {
+      keyPair = await crypto.subtle.generateKey(
+        { name: 'Ed25519' },
+        true,
+        ['sign', 'verify']
+      );
+      const rawPub = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+      publicKeyHex = bytesToHex(new Uint8Array(rawPub));
+
+      const short = publicKeyHex.substring(0, 6) + '...' + publicKeyHex.substring(58);
+      document.getElementById('homeShortAddress').textContent = short;
+      document.getElementById('dtShortAddress').textContent = short;
+      document.getElementById('receiveFullAddress').textContent = publicKeyHex;
+      
+      const char = publicKeyHex.charAt(0).toUpperCase();
+      document.getElementById('avatarLetter').textContent = char;
+      document.getElementById('dtAvatarLetter').textContent = char;
+
+      showBanner('Welcome! Non-custodial wallet active.');
+      await refreshState();
+      await loadActivity();
+    }
+
+    // STATE
+    async function refreshState() {
+      if (!publicKeyHex) return;
+      try {
+        const res = await fetch(\`\${API_URL}/wallet/\${publicKeyHex}\`);
+        const json = await res.json();
+        if (json.success) {
+          balanceMicro = BigInt(json.data.balance_micro);
+          currentNonce = json.data.nonce;
+          currentTicket = Math.max(currentTicket, (json.data.last_ticket || 0) + 1);
+
+          const coins = (Number(balanceMicro) / 1000000).toFixed(2);
+          document.getElementById('homeBalance').textContent = coins;
+          document.getElementById('homeMicro').textContent = balanceMicro.toString();
+          document.getElementById('sendAvailable').textContent = coins;
+
+          const sybil = json.data.sybil_score || 0;
+          const tier = json.data.tier || 0;
+          const tiers = ['Ghost Wallet (Tier 0)', 'Casual Citizen (Tier 1)', 'Trusted Member (Tier 2)', 'Network Guardian (Tier 3)'];
+          const tierTitle = tiers[tier] || 'Citizen';
+          
+          document.getElementById('profileTier').textContent = tierTitle;
+          document.getElementById('profileScore').textContent = \`\${sybil} / 100\`;
+          document.getElementById('profileProgress').style.width = \`\${Math.min(100, Math.max(10, sybil))}%\`;
+
+          // Desktop Widget Sync
+          document.getElementById('dtTierBadge').textContent = \`Tier \${tier}\`;
+          document.getElementById('dtTierName').textContent = tierTitle;
+          document.getElementById('dtScoreVal').textContent = \`\${sybil} / 100\`;
+          document.getElementById('dtScoreProgress').style.width = \`\${Math.min(100, Math.max(10, sybil))}%\`;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // FAUCET
+    async function claimFaucet() {
+      if (!publicKeyHex) return;
+      showBanner('Minting free test coins...', '⏳');
+      try {
+        const res = await fetch(\`\${API_URL}/faucet\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: publicKeyHex, amount_micro: 10000000 })
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner('+10.00 QBC added to your balance!', '🎉');
+          await refreshState();
+          await loadActivity();
+        } else {
+          showBanner(json.error, '❌');
+        }
+      } catch (e) {
+        showBanner('Network error: ' + e.message, '❌');
+      }
+    }
+
+    // USER ACTIVITY
+    async function loadActivity() {
+      if (!publicKeyHex) return;
+      try {
+        const res = await fetch(\`\${API_URL}/history/\${publicKeyHex}\`);
+        const json = await res.json();
+        const list = document.getElementById('activityList');
+
+        if (!json.success || json.data.length === 0) {
+          list.innerHTML = '<div style="padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: 13.5px;">No transactions yet. Tap "+10 QBC" to fund your wallet!</div>';
+          return;
+        }
+
+        list.innerHTML = '';
+        for (const tx of json.data) {
+          const isSender = tx.sender.toLowerCase() === publicKeyHex.toLowerCase();
+          const amt = (Number(tx.amount_micro) / 1000000).toFixed(2);
+          const time = new Date(tx.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          const row = document.createElement('div');
+          row.className = 'activity-row';
+          row.innerHTML = \`
+            <div class="activity-left">
+              <div class="activity-icon \${isSender ? 'out' : 'in'}">\${isSender ? '↑' : '↓'}</div>
+              <div>
+                <div class="activity-title">\${isSender ? 'Sent Payment' : (tx.tx_type === 'MINT' ? 'Free Network Mint' : 'Received Payment')}</div>
+                <div class="activity-meta">\${time} • Confirmed</div>
+              </div>
+            </div>
+            <div class="activity-amount \${isSender ? 'negative' : 'positive'}">
+              \${isSender ? '-' : '+'}\${amt} QBC
+            </div>
+          \`;
+          list.appendChild(row);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // SEND TRANSFER
+    function useDemoRecipient() {
+      document.getElementById('sendAddressInput').value = '9e3bf32d02c8fce83a9a9171fac75571520ef9966ccac037fb736a209032e8b4';
+      showBanner('Pasted test address');
+    }
+
+    function setSendAmount(v) { document.getElementById('sendAmountInput').value = v; }
+    function setSendPercent(p) {
+      const spend = Number(balanceMicro) / 1000000;
+      document.getElementById('sendAmountInput').value = (spend * p).toFixed(2);
+    }
+
+    async function submitTransfer() {
+      if (!keyPair) return;
+      const to = document.getElementById('sendAddressInput').value.trim().toLowerCase();
+      const amtVal = parseFloat(document.getElementById('sendAmountInput').value);
+
+      if (!to || to.length !== 64) {
+        showBanner('Enter a valid 64-character address', '⚠️');
+        return;
+      }
+      if (isNaN(amtVal) || amtVal <= 0) {
+        showBanner('Enter a valid amount', '⚠️');
+        return;
+      }
+
+      const amtMicro = Math.floor(amtVal * 1000000).toString();
+      if (BigInt(amtMicro) > balanceMicro) {
+        showBanner('Insufficient balance', '⚠️');
+        return;
+      }
+
+      const btn = document.getElementById('confirmSendBtn');
+      btn.disabled = true;
+      btn.textContent = 'Signing & Sending...';
+
+      try {
+        const ledgerRes = await fetch(\`\${API_URL}/ledger/latest\`);
+        const ledger = await ledgerRes.json();
+        const prevHash = ledger.data.chain_head;
+
+        const payload = {
+          type: 'TRANSFER',
+          sender: publicKeyHex,
+          receiver: to,
+          amount_micro: amtMicro,
+          fee_micro: '0',
+          nonce: currentNonce,
+          prev_hash: prevHash,
+          timestamp: Math.floor(Date.now() / 1000)
+        };
+
+        const canonical = \`MYCOIN_TX_V1:\${payload.type.length}:\${payload.type}:\${payload.sender.length}:\${payload.sender}:\${payload.receiver.length}:\${payload.receiver}:\${payload.amount_micro}:\${payload.fee_micro}:\${payload.nonce}:\${payload.prev_hash.length}:\${payload.prev_hash}:\${payload.timestamp}\`;
+
+        const sig = await crypto.subtle.sign(
+          { name: 'Ed25519' },
+          keyPair.privateKey,
+          new TextEncoder().encode(canonical)
+        );
+        const signatureHex = bytesToHex(new Uint8Array(sig));
+
+        const txRes = await fetch(\`\${API_URL}/tx\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload, signature: signatureHex })
+        });
+        const txJson = await txRes.json();
+
+        if (txJson.success) {
+          showBanner(\`Sent \${amtVal} QBC successfully!\`, '🚀');
+          document.getElementById('sendAddressInput').value = '';
+          document.getElementById('sendAmountInput').value = '';
+          await refreshState();
+          await loadActivity();
+          switchTab('home');
+        } else {
+          showBanner(txJson.error, '❌');
+        }
+      } catch (e) {
+        showBanner(e.message, '❌');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm & Send Payment';
+      }
+    }
+
+    // MINER
+    function toggleMining() {
+      const btn = document.getElementById('minerBtn');
+      const dtBtn = document.getElementById('dtMinerBtn');
+      const ring = document.getElementById('minerRing');
+      const dtStatusBadge = document.getElementById('dtMinerStatusBadge');
+
+      if (isMining) {
+        isMining = false;
+        clearInterval(miningTimer);
+        
+        btn.textContent = 'Start Earning';
+        btn.style.background = '#ffffff';
+        btn.style.color = '#000000';
+
+        if (dtBtn) {
+          dtBtn.textContent = 'Start Mining';
+          dtBtn.style.background = '#ffffff';
+          dtBtn.style.color = '#000000';
+        }
+        if (dtStatusBadge) {
+          dtStatusBadge.textContent = 'Idle';
+          dtStatusBadge.style.color = 'var(--text-muted)';
+        }
+
+        ring.classList.remove('spinning');
+        document.getElementById('minerTitle').textContent = 'Compute Paused';
+        document.getElementById('minerSpeed').textContent = '0 H/s';
+        document.getElementById('dtMinerSpeed').textContent = '0 H/s';
+      } else {
+        isMining = true;
+        
+        btn.textContent = 'Pause Earning';
+        btn.style.background = 'var(--card-elevated)';
+        btn.style.color = '#ffffff';
+
+        if (dtBtn) {
+          dtBtn.textContent = 'Pause Mining';
+          dtBtn.style.background = 'var(--card-elevated)';
+          dtBtn.style.color = '#ffffff';
+        }
+        if (dtStatusBadge) {
+          dtStatusBadge.textContent = 'Mining Active';
+          dtStatusBadge.style.color = 'var(--accent)';
+        }
+
+        ring.classList.add('spinning');
+        document.getElementById('minerTitle').textContent = 'Earning Active...';
+        showBanner('Securing ledger in background...', '⚡');
+
+        let hashes = 0;
+        let start = Date.now();
+
+        miningTimer = setInterval(async () => {
+          if (!isMining) return;
+
+          for (let i = 0; i < 40; i++) {
+            const nonce = Math.floor(Math.random() * 10000000);
+            const proof = \`\${chainHead}:\${publicKeyHex}:\${currentTicket}:\${nonce}\`;
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(proof));
+            const hex = bytesToHex(new Uint8Array(buf));
+            hashes++;
+
+            if (hex.startsWith('0000')) {
+              await submitProof(currentTicket, nonce);
+              currentTicket++;
+              break;
+            }
+          }
+
+          const sec = (Date.now() - start) / 1000;
+          const speedStr = \`\${Math.floor(hashes / Math.max(1, sec))} H/s\`;
+          document.getElementById('minerSpeed').textContent = speedStr;
+          document.getElementById('dtMinerSpeed').textContent = speedStr;
+        }, 90);
+      }
+    }
+
+    async function submitProof(ticket, nonce) {
+      try {
+        const res = await fetch(\`\${API_URL}/mine/submit\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: publicKeyHex, ticket, nonce })
+        });
+        const json = await res.json();
+        if (json.success) {
+          minedSharesCount++;
+          minedCoinsSum += 0.5;
+          document.getElementById('minerShares').textContent = minedSharesCount;
+          document.getElementById('dtMinerShares').textContent = minedSharesCount;
+          document.getElementById('minerEarned').textContent = \`+\${minedCoinsSum.toFixed(2)} QBC\`;
+          showBanner('Share verified! +0.50 Coins earned.', '💰');
+          await refreshState();
+          await loadActivity();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // GLOBAL LEDGER
+    async function loadGlobalLedger() {
+      try {
+        const statsRes = await fetch(\`\${API_URL}/stats\`);
+        const stats = await statsRes.json();
+        if (stats.success) {
+          document.getElementById('expHeight').textContent = \`Block #\${stats.data.block_height}\`;
+          document.getElementById('dtExpHeight').textContent = \`Block #\${stats.data.block_height}\`;
+          document.getElementById('expCirculating').textContent = stats.data.circulating_supply_coins + ' QBC';
+          document.getElementById('dtExpCirculating').textContent = stats.data.circulating_supply_coins + ' QBC';
+          chainHead = stats.data.chain_head;
+        }
+
+        const res = await fetch(\`\${API_URL}/ledger/latest\`);
+        const json = await res.json();
+        const list = document.getElementById('globalLedgerList');
+        list.innerHTML = '';
+
+        if (!json.success || json.data.recent_transactions.length === 0) {
+          list.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted);">No blocks recorded yet.</div>';
+          return;
+        }
+
+        for (const tx of json.data.recent_transactions) {
+          const amt = (Number(tx.amount_micro) / 1000000).toFixed(2);
+          const time = new Date(tx.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          const row = document.createElement('div');
+          row.className = 'activity-row';
+          row.innerHTML = \`
+            <div class="activity-left">
+              <div class="activity-icon \${tx.tx_type === 'MINT' ? 'in' : 'out'}">\${tx.tx_type === 'MINT' ? '⛏' : '⇌'}</div>
+              <div>
+                <div class="activity-title">\${tx.tx_type === 'MINT' ? 'Network Reward' : 'Community Transfer'}</div>
+                <div class="activity-meta">\${time} • Hash: \${tx.tx_hash.substring(0, 8)}...</div>
+              </div>
+            </div>
+            <div class="activity-amount \${tx.tx_type === 'MINT' ? 'positive' : ''}">
+              \${amt} QBC
+            </div>
+          \`;
+          list.appendChild(row);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // SOCIAL LINK
+    async function linkSocial(provider) {
+      if (!publicKeyHex) return;
+      showBanner(\`Connecting \${provider}...\`, '⏳');
+      try {
+        const res = await fetch(\`\${API_URL}/identity/link\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: publicKeyHex, provider })
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner(\`\${provider} verified (+\${json.data.sybil_score} pts)!\`, '🎉');
+          await refreshState();
+        }
+      } catch (e) {
+        showBanner('Error linking: ' + e.message, '❌');
+      }
+    }
+
+    // BITCOIN OPENTIMESTAMPS EPOCH NOTARIZATION
+    async function loadEpochInfo() {
+      try {
+        const res = await fetch(\`\${API_URL}/epoch/latest\`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const ep = json.data;
+          const epochIdEl = document.getElementById('otsEpochId');
+          const rootEl = document.getElementById('otsMerkleRoot');
+          const badgeEl = document.getElementById('otsStatusBadge');
+          const dtStatusEl = document.getElementById('dtOtsStatus');
+          const dtRootEl = document.getElementById('dtEpochRootShort');
+
+          if (epochIdEl) epochIdEl.textContent = \`Epoch #\${ep.epoch_id}\`;
+          if (rootEl) rootEl.textContent = ep.merkle_root || '0000000000000000000000000000000000000000000000000000000000000000';
+          if (badgeEl) badgeEl.textContent = ep.ots_status || 'PENDING';
+          if (dtStatusEl) dtStatusEl.textContent = ep.epoch_id ? \`Epoch #\${ep.epoch_id} (\${ep.ots_status})\` : 'Pending';
+          if (dtRootEl) {
+            dtRootEl.textContent = ep.merkle_root ? (ep.merkle_root.substring(0, 6) + '...' + ep.merkle_root.substring(58)) : 'Pending';
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function manualSettleEpoch() {
+      showBanner('Notarizing Merkle root to Bitcoin calendar...', '⏳');
+      try {
+        const res = await fetch(\`\${API_URL}/epoch/settle\`, { method: 'POST' });
+        const json = await res.json();
+        if (json.success) {
+          showBanner(\`Epoch #\${json.data.epoch_id} anchored to Bitcoin OTS!\`, '⚡');
+          await loadEpochInfo();
+          await loadGlobalLedger();
+        } else {
+          showBanner(json.error || 'Failed to settle epoch', '❌');
+        }
+      } catch (e) {
+        showBanner('Error settling epoch: ' + e.message, '❌');
+      }
+    }
+
+    // INIT
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadOrCreateWallet();
+      await loadGlobalLedger();
+      await loadEpochInfo();
+    });
+  </script>
+</body>
+</html>
+`;
