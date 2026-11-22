@@ -1,6 +1,51 @@
 import { DurableObject } from 'cloudflare:workers';
 import { canonicalizeTx, verifyEd25519Signature, sha256Hex } from './crypto';
 import { verifyMerkleProof, computeMerkleRoot } from './merkle';
+import { verifyCuckooCycle, CUCKOO_PROOF_SIZE } from './cuckoo';
+/**
+ * Canonical micro-unit ceiling (2^50) from AGENTS.md §3.
+ * All ledger amounts must remain integer-only and stay inside this bound.
+ */
+export const MAX_MICRO_UNITS = 1n << 50n;
+export const MICRO_UNITS_PER_COIN = 1000000n;
+/**
+ * Strictly parses an externally supplied micro-unit amount (JSON number or decimal string).
+ * Returns null for floats, NaN, non-integers, exponents or negative-form input, so no
+ * floating point value can ever reach ledger math.
+ */
+export function parseMicroUnits(value) {
+    if (typeof value === 'number') {
+        if (!Number.isSafeInteger(value))
+            return null;
+        return BigInt(value);
+    }
+    if (typeof value === 'string') {
+        if (!/^\d+$/.test(value))
+            return null;
+        return BigInt(value);
+    }
+    return null;
+}
+/** Binds a BigInt amount to SQLite as an exact decimal string (INTEGER affinity stores it as INTEGER). */
+export function microToDb(micro) {
+    return micro.toString();
+}
+/** Reads a SQLite micro-unit column strictly as BigInt, rejecting any REAL/float storage. */
+export function dbToMicro(value) {
+    const parsed = parseMicroUnits(value);
+    if (parsed === null) {
+        throw new Error(`Non-integer micro-unit value in ledger storage: ${String(value)}`);
+    }
+    return parsed;
+}
+/** Integer-only micro-unit -> coin rendering (zero floating point). */
+export function formatMicroAsCoins(micro) {
+    const negative = micro < 0n;
+    const abs = negative ? -micro : micro;
+    const whole = abs / MICRO_UNITS_PER_COIN;
+    const fraction = (abs % MICRO_UNITS_PER_COIN).toString().padStart(6, '0');
+    return `${negative ? '-' : ''}${whole}.${fraction}`;
+}
 export class SequencerDO extends DurableObject {
     sql;
     // Volatile in-memory token buckets for human-friendly burst smoothing (Capacity 5, 1 token / 120s)
@@ -210,22 +255,49 @@ export class SequencerDO extends DurableObject {
         if (payload.sender.toLowerCase() === payload.receiver.toLowerCase()) {
             return Response.json({ success: false, error: 'Sender and receiver cannot be identical' }, { status: 400 });
         }
-        const amountMicro = BigInt(payload.amount_micro);
-        const feeMicro = BigInt(payload.fee_micro);
+        const amountMicro = parseMicroUnits(payload.amount_micro);
+        const feeMicro = parseMicroUnits(payload.fee_micro);
+        if (amountMicro === null || feeMicro === null) {
+            return Response.json({ success: false, error: 'amount_micro and fee_micro must be canonical integer micro-units' }, { status: 400 });
+        }
         if (amountMicro <= 0n) {
             return Response.json({ success: false, error: 'Amount must be greater than zero' }, { status: 400 });
         }
         if (feeMicro < 0n) {
             return Response.json({ success: false, error: 'Fee cannot be negative' }, { status: 400 });
         }
-        // Token Bucket Burst Check
+        if (amountMicro + feeMicro > MAX_MICRO_UNITS) {
+            return Response.json({ success: false, error: 'Amount exceeds the canonical 2^50 micro-unit ceiling' }, { status: 400 });
+        }
+        // Token Bucket Burst Check with Client Micro-PoW Bypass
         const rateLimit = this.checkRateLimit(payload.sender);
+        let microPowValid = false;
         if (!rateLimit.allowed) {
-            return Response.json({
-                success: false,
-                error: 'Rate limit burst exhausted. Micro-PoW required.',
-                requires_micro_pow: true
-            }, { status: 429 });
+            const microPow = signedTx.micro_pow;
+            if (microPow &&
+                typeof microPow.salt === 'string' &&
+                microPow.salt.length > 0 &&
+                microPow.salt.length <= 64 &&
+                typeof microPow.nonce === 'number' &&
+                Number.isSafeInteger(microPow.nonce) &&
+                microPow.nonce >= 0) {
+                const powChallenge = `${payload.sender.toLowerCase()}:${microPow.salt}:${microPow.nonce}`;
+                const powHash = await sha256Hex(powChallenge);
+                if (powHash.startsWith('0000')) {
+                    microPowValid = true;
+                }
+            }
+            if (!microPowValid) {
+                return Response.json({
+                    success: false,
+                    error: 'Rate limit burst exhausted. Micro-PoW challenge required.',
+                    requires_micro_pow: true,
+                    challenge: {
+                        salt: crypto.randomUUID().slice(0, 16),
+                        difficulty: '0000'
+                    }
+                }, { status: 429 });
+            }
         }
         // Verify Canonical Serialization and Ed25519 Signature
         const canonicalStr = canonicalizeTx(payload);
@@ -233,13 +305,44 @@ export class SequencerDO extends DurableObject {
         if (!isValidSig) {
             return Response.json({ success: false, error: 'Invalid Ed25519 cryptographic signature' }, { status: 401 });
         }
-        // Fetch Sender State & Validate Monotonic Nonce & Balance
+        // Fetch Sender State & Validate Monotonic Nonce, Balance & Tier Permissions
         const senderRows = this.sql.exec(`SELECT * FROM wallets WHERE address = ?`, payload.sender.toLowerCase()).toArray();
         if (senderRows.length === 0) {
             return Response.json({ success: false, error: 'Sender wallet not found or has 0 balance' }, { status: 400 });
         }
         const sender = senderRows[0];
-        const senderBalance = BigInt(sender.balance_micro);
+        // Asymmetric Tier Enforcement: Tier 0 (Ghost Wallet) Outbound Gating
+        if (sender.tier === 0) {
+            return Response.json({
+                success: false,
+                error: 'Ghost Wallet: Outbound transfers are locked. Complete Turnstile verification or link a social account to unlock Tier 1 (Casual Citizen).',
+                tier: 0,
+                requires_verification: true
+            }, { status: 403 });
+        }
+        // Tier Daily Transfer Velocity Limits
+        const oneDayAgo = payload.timestamp - 86400;
+        const dailyTxRows = this.sql.exec(`SELECT COUNT(*) as count FROM transactions WHERE sender = ? AND timestamp >= ?`, payload.sender.toLowerCase(), oneDayAgo).toArray();
+        const dailyCount = Number(dailyTxRows[0]?.count || 0);
+        if (sender.tier === 1 && dailyCount >= 10) {
+            return Response.json({
+                success: false,
+                error: 'Daily transfer limit reached for Tier 1 (10 transfers/day). Upgrade to Tier 2 by linking Discord or Telegram.',
+                tier: 1,
+                daily_transfers: dailyCount,
+                limit: 10
+            }, { status: 429 });
+        }
+        else if (sender.tier === 2 && dailyCount >= 50) {
+            return Response.json({
+                success: false,
+                error: 'Daily transfer limit reached for Tier 2 (50 transfers/day). Upgrade to Tier 3 (Guardian) with WebAuthn Passkey.',
+                tier: 2,
+                daily_transfers: dailyCount,
+                limit: 50
+            }, { status: 429 });
+        }
+        const senderBalance = dbToMicro(sender.balance_micro);
         const totalRequired = amountMicro + feeMicro;
         if (senderBalance < totalRequired) {
             return Response.json({
@@ -265,20 +368,20 @@ export class SequencerDO extends DurableObject {
         // Compute Transaction Hash
         const txHash = await sha256Hex(canonicalStr);
         // Atomic Execution in SQLite
-        const newSenderBalance = (senderBalance - totalRequired).toString();
+        const newSenderBalance = senderBalance - totalRequired;
         const nextNonce = sender.nonce + 1;
-        this.sql.exec(`UPDATE wallets SET balance_micro = ?, nonce = ? WHERE address = ?`, Number(newSenderBalance), nextNonce, payload.sender.toLowerCase());
+        this.sql.exec(`UPDATE wallets SET balance_micro = ?, nonce = ? WHERE address = ?`, microToDb(newSenderBalance), nextNonce, payload.sender.toLowerCase());
         const receiverRows = this.sql.exec(`SELECT * FROM wallets WHERE address = ?`, payload.receiver.toLowerCase()).toArray();
         if (receiverRows.length === 0) {
-            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 0, 0)`, payload.receiver.toLowerCase(), Number(amountMicro));
+            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 0, 0)`, payload.receiver.toLowerCase(), microToDb(amountMicro));
         }
         else {
-            const currentReceiverBal = BigInt(receiverRows[0].balance_micro);
-            const newReceiverBal = (currentReceiverBal + amountMicro).toString();
-            this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, Number(newReceiverBal), payload.receiver.toLowerCase());
+            const currentReceiverBal = dbToMicro(receiverRows[0].balance_micro);
+            const newReceiverBal = currentReceiverBal + amountMicro;
+            this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, microToDb(newReceiverBal), payload.receiver.toLowerCase());
         }
         this.sql.exec(`INSERT INTO transactions (tx_hash, prev_hash, tx_type, sender, receiver, amount_micro, fee_micro, signature, timestamp)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, txHash, currentHead, payload.type, payload.sender.toLowerCase(), payload.receiver.toLowerCase(), Number(amountMicro), Number(feeMicro), signature, payload.timestamp);
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, txHash, currentHead, payload.type, payload.sender.toLowerCase(), payload.receiver.toLowerCase(), microToDb(amountMicro), microToDb(feeMicro), signature, payload.timestamp);
         this.sql.exec(`UPDATE system_state SET value = ? WHERE key = 'chain_head'`, txHash);
         const heightRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'block_height'`).toArray();
         const nextHeight = parseInt(heightRows[0].value, 10) + 1;
@@ -290,7 +393,7 @@ export class SequencerDO extends DurableObject {
                 prev_hash: currentHead,
                 block_height: nextHeight,
                 sender: payload.sender.toLowerCase(),
-                new_balance_micro: newSenderBalance,
+                new_balance_micro: newSenderBalance.toString(),
                 tokens_remaining: rateLimit.tokensLeft
             }
         });
@@ -299,22 +402,35 @@ export class SequencerDO extends DurableObject {
      * POST /faucet: Developer test faucet to fund wallets with test coins
      */
     async handleFaucet(body) {
+        if (typeof body.address !== 'string' || body.address.length === 0) {
+            return Response.json({ success: false, error: 'address is required' }, { status: 400 });
+        }
         const address = body.address.toLowerCase();
-        const amount = body.amount_micro || 10000000; // Default 10 coins
+        // Default 10 coins; every supplied value must be a canonical integer micro-unit amount.
+        const amount = body.amount_micro === undefined ? 10000000n : parseMicroUnits(body.amount_micro);
+        if (amount === null || amount <= 0n || amount > MAX_MICRO_UNITS) {
+            return Response.json({
+                success: false,
+                error: 'amount_micro must be a positive integer within the 2^50 micro-unit ceiling'
+            }, { status: 400 });
+        }
         const headRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'chain_head'`).toArray();
         const currentHead = headRows[0].value;
         const now = Math.floor(Date.now() / 1000);
-        const txHash = await sha256Hex(`MINT:${address}:${amount}:${currentHead}:${now}`);
+        const txHash = await sha256Hex(`MINT:${address}:${amount.toString()}:${currentHead}:${now}`);
         const existing = this.sql.exec(`SELECT balance_micro FROM wallets WHERE address = ?`, address).toArray();
         if (existing.length === 0) {
-            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 25, 1)`, address, amount);
+            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 25, 1)`, address, microToDb(amount));
         }
         else {
-            const newBal = Number(existing[0].balance_micro) + amount;
-            this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, newBal, address);
+            const newBal = dbToMicro(existing[0].balance_micro) + amount;
+            if (newBal > MAX_MICRO_UNITS) {
+                return Response.json({ success: false, error: 'Mint would exceed the canonical 2^50 micro-unit ceiling' }, { status: 400 });
+            }
+            this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, microToDb(newBal), address);
         }
         this.sql.exec(`INSERT INTO transactions (tx_hash, prev_hash, tx_type, sender, receiver, amount_micro, fee_micro, signature, timestamp)
-       VALUES (?, ?, 'MINT', 'GENESIS_FAUCET', ?, ?, 0, 'GENESIS_MINT_SIG', ?)`, txHash, currentHead, address, amount, now);
+       VALUES (?, ?, 'MINT', 'GENESIS_FAUCET', ?, ?, 0, 'GENESIS_MINT_SIG', ?)`, txHash, currentHead, address, microToDb(amount), now);
         this.sql.exec(`UPDATE system_state SET value = ? WHERE key = 'chain_head'`, txHash);
         const heightRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'block_height'`).toArray();
         const nextHeight = parseInt(heightRows[0].value, 10) + 1;
@@ -323,29 +439,43 @@ export class SequencerDO extends DurableObject {
             success: true,
             data: {
                 address,
-                minted_micro: amount,
+                minted_micro: amount.toString(),
                 tx_hash: txHash,
                 block_height: nextHeight
             }
         });
     }
     /**
-     * POST /mine/submit: Verified Proof-of-Work mining share
+     * POST /mine/submit: Verified Proof-of-Work or Cuckoo Cycle mining share
      */
     async handleMineSubmit(body) {
         const address = body.address.toLowerCase();
         const ticket = body.ticket;
-        const nonce = body.nonce;
         const headRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'chain_head'`).toArray();
         const currentHead = headRows[0].value;
         const now = Math.floor(Date.now() / 1000);
-        // Verify PoW: SHA256(currentHead + address + ticket + nonce) starts with '0000'
-        const proofStr = `${currentHead}:${address}:${ticket}:${nonce}`;
-        const hash = await sha256Hex(proofStr);
-        if (!hash.startsWith('0000')) {
-            return Response.json({ success: false, error: 'Invalid Proof-of-Work share solution' }, { status: 400 });
+        let isValid = false;
+        let reward = 500000; // default 0.5 coin (500,000 micro-units)
+        let proofIdentifier = '';
+        if (Array.isArray(body.cycle) && body.cycle.length === CUCKOO_PROOF_SIZE) {
+            // Memory-Latency Cuckoo Cycle Verification (<0.2 ms CPU)
+            const seedStr = `${currentHead}:${address}:${ticket}`;
+            const seedHex = await sha256Hex(seedStr);
+            isValid = verifyCuckooCycle(seedHex, body.cycle);
+            reward = 1000000; // 1.0 full QBC reward for real Cuckoo Cycle solve
+            proofIdentifier = `CUCKOO:${body.cycle.slice(0, 4).join(',')}`;
         }
-        const reward = 500000; // 0.5 coin reward per verified share
+        else if (typeof body.nonce === 'number') {
+            // Fallback SHA-256 Micro-PoW
+            const proofStr = `${currentHead}:${address}:${ticket}:${body.nonce}`;
+            const hash = await sha256Hex(proofStr);
+            isValid = hash.startsWith('0000');
+            reward = 500000; // 0.5 coin reward
+            proofIdentifier = hash;
+        }
+        if (!isValid) {
+            return Response.json({ success: false, error: 'Invalid Proof-of-Work or Cuckoo Cycle solution' }, { status: 400 });
+        }
         const existing = this.sql.exec(`SELECT balance_micro, last_ticket FROM wallets WHERE address = ?`, address).toArray();
         let newBal = reward;
         if (existing.length === 0) {
@@ -358,9 +488,9 @@ export class SequencerDO extends DurableObject {
             newBal += Number(existing[0].balance_micro);
             this.sql.exec(`UPDATE wallets SET balance_micro = ?, last_ticket = ? WHERE address = ?`, newBal, ticket, address);
         }
-        const txHash = await sha256Hex(`MINING_REWARD:${address}:${reward}:${hash}:${now}`);
+        const txHash = await sha256Hex(`MINING_REWARD:${address}:${reward}:${proofIdentifier}:${now}`);
         this.sql.exec(`INSERT INTO transactions (tx_hash, prev_hash, tx_type, sender, receiver, amount_micro, fee_micro, signature, timestamp)
-       VALUES (?, ?, 'MINT', 'NETWORK_MINING_REWARD', ?, ?, 0, ?, ?)`, txHash, currentHead, address, reward, hash, now);
+       VALUES (?, ?, 'MINT', 'NETWORK_MINING_REWARD', ?, ?, 0, ?, ?)`, txHash, currentHead, address, reward, proofIdentifier, now);
         this.sql.exec(`UPDATE system_state SET value = ? WHERE key = 'chain_head'`, txHash);
         const heightRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'block_height'`).toArray();
         const nextHeight = parseInt(heightRows[0].value, 10) + 1;
@@ -373,7 +503,7 @@ export class SequencerDO extends DurableObject {
                 new_balance_micro: newBal.toString(),
                 tx_hash: txHash,
                 block_height: nextHeight,
-                solution_hash: hash
+                solution_hash: proofIdentifier
             }
         });
     }

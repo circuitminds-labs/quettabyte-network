@@ -23,6 +23,10 @@ export interface CanonicalTxPayload {
 export interface SignedTransaction {
   payload: CanonicalTxPayload;
   signature: string;           // 128-character hex Ed25519 signature
+  micro_pow?: {
+    salt: string;
+    nonce: number;
+  };
 }
 
 export interface TransactionRecord {

@@ -1856,7 +1856,33 @@ export const WALLET_HTML = `<!DOCTYPE html>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ payload, signature: signatureHex })
         });
-        const txJson = await txRes.json();
+        let txJson = await txRes.json();
+
+        // Automated Client Micro-PoW Shield Solver (Section 4.3)
+        if (!txJson.success && txJson.requires_micro_pow && txJson.challenge) {
+          showBanner('⚡ Rate limit burst exhausted. Solving 0.8s Micro-PoW...', '⏳');
+          const salt = txJson.challenge.salt;
+          let nonce = 0;
+          const powStart = Date.now();
+          while (true) {
+            const powInput = \`\${publicKeyHex.toLowerCase()}:\${salt}:\${nonce}\`;
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(powInput));
+            const hex = bytesToHex(new Uint8Array(buf));
+            if (hex.startsWith('0000')) {
+              break;
+            }
+            nonce++;
+            if (Date.now() - powStart > 8000) break; // 8s safety ceiling
+          }
+
+          showBanner('Micro-PoW verified! Retrying payment...', '⚡');
+          const retryRes = await fetch(\`\${API_URL}/tx\`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload, signature: signatureHex, micro_pow: { salt, nonce } })
+          });
+          txJson = await retryRes.json();
+        }
 
         if (txJson.success) {
           showBanner(\`Sent \${amtVal} QBC successfully!\`, '🚀');
@@ -1865,6 +1891,9 @@ export const WALLET_HTML = `<!DOCTYPE html>
           await refreshState();
           await loadActivity();
           switchTab('home');
+        } else if (txJson.requires_verification) {
+          showBanner('🔒 Ghost Wallet: Outbound transfers locked! Link social or Turnstile in Profile.', '⚠️');
+          switchTab('profile');
         } else {
           showBanner(txJson.error, '❌');
         }
