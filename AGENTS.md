@@ -138,6 +138,10 @@ CREATE TABLE epochs (
   - **Live Global Production Deployment:** `https://mycoin-core.gusainlabs.workers.dev` (Active on Cloudflare Edge with SQLite DO & Hourly Cron `0 * * * *`).
   - **Disaster Recovery & Public Auditor (`scripts/audit_and_replay.py`):** Canonical DAG export endpoint (`/api/ledger/export`), mathematical Ed25519 signature auditor, Bitcoin OTS proof checker, and 100% SQLite reconstruction engine. (COMPLETED & VERIFIED)
   - **Edge Bot Shield & WAF:** Stateless edge rate-limiting (60 req/min/IP) and Cloudflare Turnstile bot verification protecting the sequencer against DDoS. (COMPLETED & VERIFIED)
+- [x] **Milestone 7: Cuckoo Cycle Mining, Client Micro-PoW Shield & Asymmetric Identity Tiers**
+  - `src/cuckoo.ts`: High-speed SipHash-2-4 engine & Cuckoo Cycle verifier (<0.2 ms CPU on Cloudflare Worker). (COMPLETED & VERIFIED)
+  - `src/sequencer.ts`: Client Micro-PoW challenge bypass for token-bucket rate limits; Ghost Wallet (Tier 0) outbound gating with tiered daily velocity limits (Tier 1: 10/day, Tier 2: 50/day, Tier 3: unlimited); canonical BigInt/integer micro-unit bounds. (COMPLETED & VERIFIED)
+  - `public/index.html`: Automatic client-side 0.8s Micro-PoW challenge solver on burst exhaustion; live Sybil Trust Matrix progression. (COMPLETED & VERIFIED)
 
 ---
 
