@@ -147,3 +147,19 @@ CREATE TABLE epochs (
 3. **Never exceed 10 ms CPU on Worker:** Always use native WebCrypto API (`crypto.subtle`); never use pure-JS hashing libraries.
 4. **Never put private keys on the server:** The server is non-custodial. Private keys never leave the user's browser.
 5. **Always update this file:** When a milestone is finished or an architectural decision is modified, update `AGENTS.md` to keep the context permanently fresh.
+
+---
+
+## 7. 🤝 DUAL-PROCESSING ARCHITECTURE (ANTIGRAVITY + OPENCODE)
+To scale development and protocol testing without incurring API fees, a symbiotic dual-processing framework is established:
+- **Lead Architect (Antigravity / Google DeepMind):**
+  - Owns protocol design, cryptographic invariants, security audits, and code integration.
+  - Crafts atomic task contracts with acceptance criteria and validates all outputs.
+  - Controls the `opencode-agent` subagent and dispatches tasks via `scripts/opencode_bridge.py`.
+- **Worker Subagent (Local OpenCode Engine):**
+  - Runs locally on free, zero-cost models (`opencode/deepseek-v4.1-flash-free`, `glm-5.3-flash-free`).
+  - Configured via `opencode.json` and `.opencode/agents/qbc-worker.md`.
+  - Ingests `.opencode/CONTEXT.md` for strict guardrail compliance.
+  - Executes file inspections, boilerplate generation, unit test writing, and localized refactoring.
+  - Enforced by an automated TypeScript compilation gate (`npx tsc --noEmit`) before output handoff.
+
