@@ -449,28 +449,34 @@ export class SequencerDO extends DurableObject {
      * POST /mine/submit: Verified Proof-of-Work or Cuckoo Cycle mining share
      */
     async handleMineSubmit(body) {
+        if (typeof body.address !== 'string' || body.address.length === 0) {
+            return Response.json({ success: false, error: 'address is required' }, { status: 400 });
+        }
         const address = body.address.toLowerCase();
         const ticket = body.ticket;
+        if (!Number.isSafeInteger(ticket) || ticket < 0) {
+            return Response.json({ success: false, error: 'ticket must be a non-negative integer' }, { status: 400 });
+        }
         const headRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'chain_head'`).toArray();
         const currentHead = headRows[0].value;
         const now = Math.floor(Date.now() / 1000);
         let isValid = false;
-        let reward = 500000; // default 0.5 coin (500,000 micro-units)
+        let reward = 500000n; // default 0.5 coin (500,000 micro-units)
         let proofIdentifier = '';
         if (Array.isArray(body.cycle) && body.cycle.length === CUCKOO_PROOF_SIZE) {
             // Memory-Latency Cuckoo Cycle Verification (<0.2 ms CPU)
             const seedStr = `${currentHead}:${address}:${ticket}`;
             const seedHex = await sha256Hex(seedStr);
             isValid = verifyCuckooCycle(seedHex, body.cycle);
-            reward = 1000000; // 1.0 full QBC reward for real Cuckoo Cycle solve
+            reward = 1000000n; // 1.0 full QBC reward for real Cuckoo Cycle solve
             proofIdentifier = `CUCKOO:${body.cycle.slice(0, 4).join(',')}`;
         }
-        else if (typeof body.nonce === 'number') {
+        else if (typeof body.nonce === 'number' && Number.isSafeInteger(body.nonce) && body.nonce >= 0) {
             // Fallback SHA-256 Micro-PoW
             const proofStr = `${currentHead}:${address}:${ticket}:${body.nonce}`;
             const hash = await sha256Hex(proofStr);
             isValid = hash.startsWith('0000');
-            reward = 500000; // 0.5 coin reward
+            reward = 500000n; // 0.5 coin reward
             proofIdentifier = hash;
         }
         if (!isValid) {
@@ -479,18 +485,21 @@ export class SequencerDO extends DurableObject {
         const existing = this.sql.exec(`SELECT balance_micro, last_ticket FROM wallets WHERE address = ?`, address).toArray();
         let newBal = reward;
         if (existing.length === 0) {
-            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, ?, 25, 1)`, address, newBal, ticket);
+            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, ?, 25, 1)`, address, microToDb(newBal), ticket);
         }
         else {
             if (ticket <= existing[0].last_ticket) {
                 return Response.json({ success: false, error: 'Stale ticket: duplicate or old ticket number' }, { status: 400 });
             }
-            newBal += Number(existing[0].balance_micro);
-            this.sql.exec(`UPDATE wallets SET balance_micro = ?, last_ticket = ? WHERE address = ?`, newBal, ticket, address);
+            newBal = dbToMicro(existing[0].balance_micro) + reward;
+            if (newBal > MAX_MICRO_UNITS) {
+                return Response.json({ success: false, error: 'Balance would exceed the canonical 2^50 micro-unit ceiling' }, { status: 400 });
+            }
+            this.sql.exec(`UPDATE wallets SET balance_micro = ?, last_ticket = ? WHERE address = ?`, microToDb(newBal), ticket, address);
         }
-        const txHash = await sha256Hex(`MINING_REWARD:${address}:${reward}:${proofIdentifier}:${now}`);
+        const txHash = await sha256Hex(`MINING_REWARD:${address}:${reward.toString()}:${proofIdentifier}:${now}`);
         this.sql.exec(`INSERT INTO transactions (tx_hash, prev_hash, tx_type, sender, receiver, amount_micro, fee_micro, signature, timestamp)
-       VALUES (?, ?, 'MINT', 'NETWORK_MINING_REWARD', ?, ?, 0, ?, ?)`, txHash, currentHead, address, reward, proofIdentifier, now);
+       VALUES (?, ?, 'MINT', 'NETWORK_MINING_REWARD', ?, ?, 0, ?, ?)`, txHash, currentHead, address, microToDb(reward), proofIdentifier, now);
         this.sql.exec(`UPDATE system_state SET value = ? WHERE key = 'chain_head'`, txHash);
         const heightRows = this.sql.exec(`SELECT value FROM system_state WHERE key = 'block_height'`).toArray();
         const nextHeight = parseInt(heightRows[0].value, 10) + 1;
@@ -499,7 +508,7 @@ export class SequencerDO extends DurableObject {
             success: true,
             data: {
                 address,
-                reward_micro: reward,
+                reward_micro: reward.toString(),
                 new_balance_micro: newBal.toString(),
                 tx_hash: txHash,
                 block_height: nextHeight,
@@ -562,7 +571,18 @@ export class SequencerDO extends DurableObject {
      * POST /claim: Lazy Merkle claim execution
      */
     async handleClaim(body) {
-        const claimKey = `${body.epoch_id}:${body.address.toLowerCase()}`;
+        if (typeof body.address !== 'string' || body.address.length === 0 || !Number.isSafeInteger(body.epoch_id)) {
+            return Response.json({ success: false, error: 'address and integer epoch_id are required' }, { status: 400 });
+        }
+        const address = body.address.toLowerCase();
+        const amountMicro = parseMicroUnits(body.amount_micro);
+        if (amountMicro === null || amountMicro <= 0n || amountMicro > MAX_MICRO_UNITS) {
+            return Response.json({
+                success: false,
+                error: 'amount_micro must be a positive integer within the 2^50 micro-unit ceiling'
+            }, { status: 400 });
+        }
+        const claimKey = `${body.epoch_id}:${address}`;
         const existingClaim = this.sql.exec(`SELECT * FROM claims WHERE claim_key = ?`, claimKey).toArray();
         if (existingClaim.length > 0) {
             return Response.json({ success: false, error: 'Epoch reward already claimed for this wallet' }, { status: 400 });
@@ -572,27 +592,31 @@ export class SequencerDO extends DurableObject {
             return Response.json({ success: false, error: 'Epoch not found' }, { status: 404 });
         }
         const payoutRoot = epochRows[0].payout_merkle_root;
-        const leafHash = await sha256Hex(`${body.address.toLowerCase()}:${body.amount_micro}`);
+        // Canonical leaf binds the normalized integer micro amount, never a raw client string.
+        const leafHash = await sha256Hex(`${address}:${amountMicro.toString()}`);
         const isValidProof = await verifyMerkleProof(leafHash, body.proof, payoutRoot);
         if (!isValidProof) {
             return Response.json({ success: false, error: 'Invalid Merkle inclusion proof for epoch claim' }, { status: 401 });
         }
         const now = Math.floor(Date.now() / 1000);
-        const existingWallet = this.sql.exec(`SELECT balance_micro FROM wallets WHERE address = ?`, body.address.toLowerCase()).toArray();
-        let newBal = body.amount_micro;
+        const existingWallet = this.sql.exec(`SELECT balance_micro FROM wallets WHERE address = ?`, address).toArray();
+        let newBal = amountMicro;
         if (existingWallet.length === 0) {
-            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 25, 1)`, body.address.toLowerCase(), newBal);
+            this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 25, 1)`, address, microToDb(newBal));
         }
         else {
-            newBal += Number(existingWallet[0].balance_micro);
-            this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, newBal, body.address.toLowerCase());
+            newBal = dbToMicro(existingWallet[0].balance_micro) + amountMicro;
+            if (newBal > MAX_MICRO_UNITS) {
+                return Response.json({ success: false, error: 'Balance would exceed the canonical 2^50 micro-unit ceiling' }, { status: 400 });
+            }
+            this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, microToDb(newBal), address);
         }
-        this.sql.exec(`INSERT INTO claims (claim_key, epoch_id, wallet_address, amount_micro, claimed_at) VALUES (?, ?, ?, ?, ?)`, claimKey, body.epoch_id, body.address.toLowerCase(), body.amount_micro, now);
+        this.sql.exec(`INSERT INTO claims (claim_key, epoch_id, wallet_address, amount_micro, claimed_at) VALUES (?, ?, ?, ?, ?)`, claimKey, body.epoch_id, address, microToDb(amountMicro), now);
         return Response.json({
             success: true,
             data: {
-                address: body.address.toLowerCase(),
-                claimed_micro: body.amount_micro,
+                address,
+                claimed_micro: amountMicro.toString(),
                 new_balance_micro: newBal.toString()
             }
         });
@@ -622,7 +646,7 @@ export class SequencerDO extends DurableObject {
         const totalTxs = this.sql.exec(`SELECT count(*) as count FROM transactions`).toArray()[0].count;
         const totalWallets = this.sql.exec(`SELECT count(*) as count FROM wallets`).toArray()[0].count;
         const supplyRow = this.sql.exec(`SELECT sum(balance_micro) as total FROM wallets`).toArray();
-        const circulatingMicro = supplyRow[0].total || 0;
+        const circulatingMicro = dbToMicro(supplyRow[0].total ?? 0);
         return Response.json({
             success: true,
             data: {
@@ -630,7 +654,7 @@ export class SequencerDO extends DurableObject {
                 chain_head: head,
                 total_transactions: totalTxs,
                 total_wallets: totalWallets,
-                circulating_supply_coins: (Number(circulatingMicro) / 1000000).toFixed(6),
+                circulating_supply_coins: formatMicroAsCoins(circulatingMicro),
                 circulating_supply_micro: circulatingMicro.toString(),
                 serverless_cost: "$0.00 / Month Forever",
                 consensus: "Single-Threaded SQLite DO + OTS Bitcoin Anchor"
