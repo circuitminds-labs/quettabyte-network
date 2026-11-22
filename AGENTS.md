@@ -14,6 +14,7 @@
 - **The Security Premise:** *Tamper-evident, not fully decentralized.* A single operator coordinates state, but a public SHA-256 hash chain, client-side Ed25519 signatures, and hourly Bitcoin OTS Merkle proofs make operator fraud mathematically impossible to hide.
 - **Legal Demarcation:** Strictly a **closed-loop utility and reputation point system**. Zero fiat exchange, no cash-out, no real-money trading, avoiding India VDA/PMLA and Discord ToS issues.
 - **Fair Launch:** Zero pre-mine. Genesis supply = 0. All coins enter through mining and network contribution.
+- **Institutional Naming Standard:** All repositories, packages, cloud services, and files strictly follow clean professional kebab-case (`quettabyte-network`, `quettabyte-core`, `quettabyte-ledger`). Zero random underscores, zero informal slang, zero amateur version suffixes.
 
 ---
 

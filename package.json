@@ -1,7 +1,7 @@
 {
-  "name": "mycoin-core",
+  "name": "quettabyte-core",
   "version": "1.0.0",
-  "description": "Zero-Cost Serverless Cryptographic Ledger Core Engine",
+  "description": "Quettabyte Coin (QBC) - Zero-Cost Serverless Cryptographic Ledger Core Engine",
   "main": "src/index.ts",
   "scripts": {
     "sync-ui": "python scripts/sync_ui.py",

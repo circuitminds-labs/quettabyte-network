@@ -5,6 +5,7 @@
 - **SI Prefix:** Quetta ($10^{30}$), scaling digital value from bit ($2^0$) to quetta.
 - **Base Unit:** 1 QBC = 1,000,000 micro-units (integer only, `BigInt`).
 - **Genesis Supply:** 0. Fair launch, zero pre-mine.
+- **Naming Standard:** Strict professional kebab-case (`quettabyte-network`, `quettabyte-core`, `quettabyte-ledger`). Zero random underscores or informal suffixes.
 
 ## 2. Architecture Layout
 - **Layer 1: Edge Gate (`src/index.ts`)**
