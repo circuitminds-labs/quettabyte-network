@@ -1,4 +1,4 @@
-# 🪙 MyCoin: Zero-Cost Serverless Cryptographic Ledger
+# 🌌 Quettabyte Coin (QBC): Zero-Cost Serverless Cryptographic Ledger
 
 > **A tamper-evident, non-custodial digital micro-currency engineered to operate permanently at $0 running cost with no credit card required.**
 
@@ -12,7 +12,8 @@
 
 ## 🌟 Overview
 
-**MyCoin** bridges the gap between centralized bot economies (OwO, Dank Memer) and heavy Layer-1 blockchains (Bitcoin, Ethereum):
+**Quettabyte Coin (QBC)** bridges the gap between centralized bot economies (OwO, Dank Memer) and heavy Layer-1 blockchains (Bitcoin, Ethereum):
+* **Scale of Value:** Just as Bitcoin represents the fundamental unit of information (the bit, $2^0$), Quettabyte Coin scales digital value to the quetta ($10^{30}$ bytes), the largest SI magnitude prefix recognized in science.
 * **Trust Model:** *"Don't trust the operator; verify the math."* The operator runs the database, but cryptographic hash chaining, client-side digital signatures, and hourly anchoring to Bitcoin make tampering mathematically impossible to hide.
 * **$0 Forever:** Designed strictly within the free tiers of Cloudflare (`workerd` + SQLite Durable Object), GitHub Pages, and Bitcoin OpenTimestamps.
 * **Non-Custodial:** Private keys never touch the server. Key generation and signing happen client-side via native WebCrypto (`Ed25519`).
