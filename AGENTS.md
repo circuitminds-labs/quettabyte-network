@@ -136,7 +136,7 @@ CREATE TABLE epochs (
   - Webhook handlers for `/balance`, `/pay`, and `/mine` issuing ephemeral signing deep-links.
 - [x] **Milestone 6: Bitcoin OpenTimestamps Epoch Anchoring & Global Deployment**
   - `src/sequencer.ts`, `src/index.ts`, `wrangler.toml`: Hourly Cloudflare Cron Trigger settling epochs, computing Merkle roots, and notarizing directly into Bitcoin via OpenTimestamps (`a.pool.opentimestamps.org`). Live OTS receipt storage and explorer verification. (COMPLETED & VERIFIED)
-  - **Live Global Production Deployment:** `https://mycoin-core.gusainlabs.workers.dev` (Active on Cloudflare Edge with SQLite DO & Hourly Cron `0 * * * *`).
+  - **Live Global Production Deployment:** `https://quettabyte-core.circuitminds.workers.dev` (Active on Cloudflare Edge with SQLite DO & Hourly Cron `0 * * * *`).
   - **Disaster Recovery & Public Auditor (`scripts/audit_and_replay.py`):** Canonical DAG export endpoint (`/api/ledger/export`), mathematical Ed25519 signature auditor, Bitcoin OTS proof checker, and 100% SQLite reconstruction engine. (COMPLETED & VERIFIED)
   - **Edge Bot Shield & WAF:** Stateless edge rate-limiting (60 req/min/IP) and Cloudflare Turnstile bot verification protecting the sequencer against DDoS. (COMPLETED & VERIFIED)
 - [x] **Milestone 7: Cuckoo Cycle Mining, Client Micro-PoW Shield & Asymmetric Identity Tiers**

@@ -20,7 +20,7 @@ from typing import List, Dict, Any
 
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
-DEFAULT_URL = "https://mycoin-core.gusainlabs.workers.dev/api/ledger/export"
+DEFAULT_URL = "https://quettabyte-core.circuitminds.workers.dev/api/ledger/export"
 
 def sha256_hex(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()

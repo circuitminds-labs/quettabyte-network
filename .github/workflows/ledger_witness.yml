@@ -26,12 +26,12 @@ jobs:
 
       - name: Run Independent Cryptographic Audit & Replay
         run: |
-          python scripts/audit_and_replay.py https://mycoin-core.gusainlabs.workers.dev/api/ledger/export
+          python scripts/audit_and_replay.py https://quettabyte-core.circuitminds.workers.dev/api/ledger/export
 
       - name: Save Canonical Ledger Snapshot
         run: |
           mkdir -p ledger
-          curl -s https://mycoin-core.gusainlabs.workers.dev/api/ledger/export > ledger/latest.json
+          curl -s https://quettabyte-core.circuitminds.workers.dev/api/ledger/export > ledger/latest.json
 
       - name: Commit Verified Ledger Witness Snapshot
         run: |
