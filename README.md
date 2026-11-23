@@ -1,8 +1,14 @@
 # 🌌 Quettabyte Coin (QBC): Zero-Cost Serverless Cryptographic Ledger
+### 🔬 Experimental Public Testnet-Alpha (`testnet-alpha-v1`)
 
-> **A tamper-evident, non-custodial digital micro-currency engineered to operate permanently at $0 running cost with no credit card required.**
+> ⚠️ **IMPORTANT RESEARCH & TESTNET NOTICE**  
+> This repository, the live Cloudflare Worker deployment, and the public Web Wallet are operating strictly in **Public Testnet-Alpha** for cryptographic peer review, stress testing, and open-source verification.
+> * **Zero Monetary Value:** All QBC coins, faucet mints, mining rewards, and wallet balances are experimental test units with **$0.00 monetary value**. There is no ICO, no real-money trading, and no fiat redemption.
+> * **Testing & Audit State:** The network state, parameter thresholds, and SQLite Durable Object schemas may undergo planned testnet resets during active protocol security audits prior to any future mainnet genesis.
+> * **Research Blueprint:** The code is provided for developers and cryptographic researchers to inspect the zero-cost architecture, run independent ledger audits (`scripts/audit_and_replay.py`), and test native WebCrypto Ed25519 signing.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Network: Testnet--Alpha](https://img.shields.io/badge/Network-Public%20Testnet--Alpha-yellow.svg)](https://github.com/circuitminds-labs/quettabyte-network)
 [![Cloudflare: Free Tier](https://img.shields.io/badge/Cloudflare-100%25%20Free%20Tier-orange.svg)](https://workers.cloudflare.com)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict%20Mode-blue.svg)](tsconfig.json)
 [![Bitcoin: OpenTimestamps](https://img.shields.io/badge/Bitcoin-OpenTimestamps%20Anchored-gold.svg)](https://opentimestamps.org)

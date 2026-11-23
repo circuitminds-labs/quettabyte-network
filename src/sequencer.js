@@ -163,6 +163,10 @@ export class SequencerDO extends DurableObject {
                 const body = await request.json();
                 return await this.handleSubmitTx(body);
             }
+            if (request.method === 'POST' && (path === '/tx/batch' || path === '/transfer/batch')) {
+                const body = await request.json();
+                return await this.handleBatchTx(body);
+            }
             if (request.method === 'POST' && path === '/faucet') {
                 const body = await request.json();
                 return await this.handleFaucet(body);
@@ -362,7 +366,8 @@ export class SequencerDO extends DurableObject {
         if (payload.prev_hash.toLowerCase() !== currentHead.toLowerCase()) {
             return Response.json({
                 success: false,
-                error: `Stale prev_hash. Chain head has moved. Current head: ${currentHead}`
+                error: `Stale prev_hash. Chain head has moved. Current head: ${currentHead}`,
+                current_head: currentHead
             }, { status: 409 });
         }
         // Compute Transaction Hash
@@ -395,6 +400,109 @@ export class SequencerDO extends DurableObject {
                 sender: payload.sender.toLowerCase(),
                 new_balance_micro: newSenderBalance.toString(),
                 tokens_remaining: rateLimit.tokensLeft
+            }
+        });
+    }
+    /**
+     * POST /tx/batch or /transfer/batch: Atomic micro-rollup of multiple signed transactions.
+     * All transactions are executed within a single SQLite transaction (1 disk write).
+     * Scales throughput to hundreds of thousands of transfers without burning Cloudflare DO write quota.
+     */
+    async handleBatchTx(body) {
+        if (!body || !Array.isArray(body.transactions) || body.transactions.length === 0) {
+            return Response.json({ success: false, error: 'transactions array is required and cannot be empty' }, { status: 400 });
+        }
+        if (body.transactions.length > 100) {
+            return Response.json({ success: false, error: 'Maximum batch size is 100 transactions per request' }, { status: 400 });
+        }
+        const results = [];
+        let currentHead = this.sql.exec(`SELECT value FROM system_state WHERE key = 'chain_head'`).toArray()[0].value;
+        let currentHeight = parseInt(this.sql.exec(`SELECT value FROM system_state WHERE key = 'block_height'`).toArray()[0].value, 10);
+        this.sql.exec('BEGIN TRANSACTION;');
+        try {
+            for (const signedTx of body.transactions) {
+                const { payload, signature } = signedTx;
+                if (!payload || !signature) {
+                    results.push({ tx_hash: '', success: false, error: 'Malformed signed transaction' });
+                    continue;
+                }
+                const senderAddr = payload.sender.toLowerCase();
+                const receiverAddr = payload.receiver.toLowerCase();
+                if (senderAddr === receiverAddr) {
+                    results.push({ tx_hash: '', success: false, error: 'Sender and receiver identical' });
+                    continue;
+                }
+                const amountMicro = parseMicroUnits(payload.amount_micro);
+                const feeMicro = parseMicroUnits(payload.fee_micro);
+                if (amountMicro === null || feeMicro === null || amountMicro <= 0n || feeMicro < 0n || amountMicro + feeMicro > MAX_MICRO_UNITS) {
+                    results.push({ tx_hash: '', success: false, error: 'Invalid micro-unit amount or fee' });
+                    continue;
+                }
+                const canonicalStr = canonicalizeTx(payload);
+                const isValidSig = await verifyEd25519Signature(senderAddr, signature, canonicalStr);
+                if (!isValidSig) {
+                    results.push({ tx_hash: '', success: false, error: 'Invalid Ed25519 signature' });
+                    continue;
+                }
+                const senderRows = this.sql.exec(`SELECT * FROM wallets WHERE address = ?`, senderAddr).toArray();
+                if (senderRows.length === 0) {
+                    results.push({ tx_hash: '', success: false, error: 'Sender wallet not found' });
+                    continue;
+                }
+                const sender = senderRows[0];
+                if (sender.tier === 0) {
+                    results.push({ tx_hash: '', success: false, error: 'Ghost wallet outbound locked' });
+                    continue;
+                }
+                const senderBal = dbToMicro(sender.balance_micro);
+                const totalNeeded = amountMicro + feeMicro;
+                if (senderBal < totalNeeded) {
+                    results.push({ tx_hash: '', success: false, error: 'Insufficient balance' });
+                    continue;
+                }
+                if (payload.nonce !== sender.nonce) {
+                    results.push({ tx_hash: '', success: false, error: `Invalid nonce: expected ${sender.nonce}` });
+                    continue;
+                }
+                if (payload.prev_hash.toLowerCase() !== currentHead.toLowerCase()) {
+                    results.push({ tx_hash: '', success: false, error: `Stale prev_hash. Head is ${currentHead}` });
+                    continue;
+                }
+                const txHash = await sha256Hex(canonicalStr);
+                const newSenderBal = senderBal - totalNeeded;
+                const nextNonce = sender.nonce + 1;
+                this.sql.exec(`UPDATE wallets SET balance_micro = ?, nonce = ? WHERE address = ?`, microToDb(newSenderBal), nextNonce, senderAddr);
+                const recRows = this.sql.exec(`SELECT * FROM wallets WHERE address = ?`, receiverAddr).toArray();
+                if (recRows.length === 0) {
+                    this.sql.exec(`INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 0, 0)`, receiverAddr, microToDb(amountMicro));
+                }
+                else {
+                    const recBal = dbToMicro(recRows[0].balance_micro);
+                    this.sql.exec(`UPDATE wallets SET balance_micro = ? WHERE address = ?`, microToDb(recBal + amountMicro), receiverAddr);
+                }
+                this.sql.exec(`INSERT INTO transactions (tx_hash, prev_hash, tx_type, sender, receiver, amount_micro, fee_micro, signature, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, txHash, currentHead, payload.type, senderAddr, receiverAddr, microToDb(amountMicro), microToDb(feeMicro), signature, payload.timestamp);
+                currentHead = txHash;
+                currentHeight++;
+                results.push({ tx_hash: txHash, success: true });
+            }
+            this.sql.exec(`UPDATE system_state SET value = ? WHERE key = 'chain_head'`, currentHead);
+            this.sql.exec(`UPDATE system_state SET value = ? WHERE key = 'block_height'`, currentHeight.toString());
+            this.sql.exec('COMMIT;');
+        }
+        catch (err) {
+            this.sql.exec('ROLLBACK;');
+            return Response.json({ success: false, error: err.message || 'Batch execution failed' }, { status: 500 });
+        }
+        const processedCount = results.filter(r => r.success).length;
+        return Response.json({
+            success: true,
+            data: {
+                total_in_batch: body.transactions.length,
+                processed: processedCount,
+                new_chain_head: currentHead,
+                new_block_height: currentHeight,
+                results
             }
         });
     }

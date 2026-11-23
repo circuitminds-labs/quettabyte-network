@@ -890,9 +890,9 @@ export const WALLET_HTML = `<!DOCTYPE html>
         <span class="brand-name">Quetta<span style="color: var(--accent);">byte</span></span>
       </a>
 
-      <div class="network-badge">
-        <span class="dot"></span>
-        <span>Zero Cost • Active</span>
+      <div class="network-badge" style="background: rgba(234, 179, 8, 0.15); color: #facc15;">
+        <span class="dot" style="background: #facc15;"></span>
+        <span>Testnet-Alpha (v1)</span>
       </div>
     </div>
   </header>
@@ -907,7 +907,7 @@ export const WALLET_HTML = `<!DOCTYPE html>
           <div class="dt-brand-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4); color: #000; font-family: var(--font-mono); font-size: 20px; font-weight: 900;">Q</div>
           <div>
             <div class="dt-brand-title">Quettabyte Coin</div>
-            <div class="dt-brand-sub">● QBC Mainnet (10³⁰)</div>
+            <div class="dt-brand-sub" style="color: #facc15;">● Testnet-Alpha ($0 Testbed)</div>
           </div>
         </a>
 
@@ -959,6 +959,15 @@ export const WALLET_HTML = `<!DOCTYPE html>
 
     <!-- 2. CENTER MAIN STAGE (Mobile & Desktop Shared Core) -->
     <main class="app-shell">
+
+      <!-- TESTNET-ALPHA NOTICE BANNER -->
+      <div style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.22); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #fef08a;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>🔬</span>
+          <span><strong>Testnet-Alpha Sandbox:</strong> Coins have $0.00 value. For cryptographic testing & peer review.</span>
+        </div>
+        <span style="font-family: var(--font-mono); font-size: 11px; background: rgba(234, 179, 8, 0.18); padding: 2px 6px; border-radius: 4px;">v1-test</span>
+      </div>
 
       <!-- 1. HOME / WALLET TAB -->
       <div id="tab-home" class="page-tab active">
@@ -1362,14 +1371,60 @@ export const WALLET_HTML = `<!DOCTYPE html>
   <div class="sheet-backdrop" id="receiveSheet" onclick="closeSheet(event, 'receiveSheet')">
     <div class="bottom-sheet" onclick="event.stopPropagation()">
       <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Receive Coins</h3>
-      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Share your public key address to receive fee-free transfers from any device.</p>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Share your public key address or generate a custom payment link.</p>
 
       <div style="background: #ffffff; padding: 20px; border-radius: var(--radius-md); text-align: center; margin-bottom: 16px;">
         <div style="font-size: 48px; margin-bottom: 8px;">📱</div>
         <div style="font-size: 11.5px; font-family: var(--font-mono); color: #000; word-break: break-all;" id="receiveFullAddress">Generating...</div>
       </div>
 
-      <button class="cta-btn" onclick="copyAddress()">Copy Address</button>
+      <div style="margin-bottom: 16px;">
+        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px;">Requested Amount (Optional QBC)</label>
+        <input type="number" id="requestAmountInput" placeholder="e.g. 5.0" class="input-field" style="width: 100%; box-sizing: border-box;" step="0.01">
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="cta-btn" onclick="copyAddress()" style="flex: 1;">Copy Address</button>
+        <button class="cta-btn" onclick="copyPaymentLink()" style="flex: 1; background: var(--card-elevated); color: #fff; border: 1px solid var(--border);">Copy Pay Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTION RECEIPT MODAL SHEET -->
+  <div class="sheet-backdrop" id="receiptSheet" onclick="closeSheet(event, 'receiptSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 28px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">✓</div>
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Transfer Confirmed</h3>
+        <p style="font-size: 13px; color: #10b981; font-weight: 600;">Settled & Sequenced in Layer 2 SQLite</p>
+      </div>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+          <span style="color: var(--text-secondary);">Amount Sent</span>
+          <span style="font-weight: 700; color: #ffffff;" id="receiptAmount">0.00 QBC</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+          <span style="color: var(--text-secondary);">Block Height</span>
+          <span style="font-family: var(--font-mono); color: var(--accent);" id="receiptHeight">#0</span>
+        </div>
+        <div style="margin-bottom: 10px; font-size: 12px;">
+          <div style="color: var(--text-secondary); margin-bottom: 4px;">Recipient</div>
+          <div style="font-family: var(--font-mono); word-break: break-all; background: #000; padding: 6px 10px; border-radius: 6px;" id="receiptTo">...</div>
+        </div>
+        <div style="font-size: 12px;">
+          <div style="color: var(--text-secondary); margin-bottom: 4px;">Transaction Hash (Ed25519)</div>
+          <div style="font-family: var(--font-mono); word-break: break-all; background: #000; padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <span id="receiptHash" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%;">...</span>
+            <button onclick="copyReceiptHash()" style="background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 13px;">📋</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="cta-btn" onclick="inspectInExplorer()" style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; flex: 1;">View in Explorer</button>
+        <button class="cta-btn" onclick="document.getElementById('receiptSheet').classList.remove('open')" style="flex: 1;">Done</button>
+      </div>
     </div>
   </div>
 
@@ -1802,6 +1857,56 @@ export const WALLET_HTML = `<!DOCTYPE html>
       document.getElementById('sendAmountInput').value = (spend * p).toFixed(2);
     }
 
+    let latestReceiptTx = null;
+
+    function copyPaymentLink() {
+      if (!publicKeyHex) return;
+      const reqAmt = document.getElementById('requestAmountInput')?.value.trim();
+      const origin = window.location.origin + window.location.pathname;
+      const link = reqAmt ? \`\${origin}?pay=\${publicKeyHex}&amount=\${reqAmt}\` : \`\${origin}?pay=\${publicKeyHex}\`;
+      navigator.clipboard.writeText(link);
+      showBanner('📋 Instant payment link copied to clipboard!', '✨');
+    }
+
+    function showTxReceipt(data) {
+      latestReceiptTx = data;
+      document.getElementById('receiptAmount').textContent = \`\${data.amount} QBC\`;
+      document.getElementById('receiptHeight').textContent = \`#\${data.block_height || 0}\`;
+      document.getElementById('receiptTo').textContent = data.to;
+      document.getElementById('receiptHash').textContent = data.tx_hash;
+      document.getElementById('receiptSheet').classList.add('open');
+    }
+
+    function copyReceiptHash() {
+      if (latestReceiptTx && latestReceiptTx.tx_hash) {
+        navigator.clipboard.writeText(latestReceiptTx.tx_hash);
+        showBanner('Transaction hash copied!', '📋');
+      }
+    }
+
+    function inspectInExplorer() {
+      document.getElementById('receiptSheet').classList.remove('open');
+      switchTab('explorer');
+    }
+
+    function checkUrlPaymentRequest() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const payTo = params.get('pay');
+        const amount = params.get('amount');
+        if (payTo && payTo.length === 64) {
+          switchTab('send');
+          document.getElementById('sendAddressInput').value = payTo;
+          if (amount && parseFloat(amount) > 0) {
+            document.getElementById('sendAmountInput').value = amount;
+          }
+          showBanner(\`💳 Payment request loaded: \${amount ? amount + ' QBC' : 'Ready'}\`, '✨');
+        }
+      } catch (e) {
+        console.warn('URL payment parsing skipped', e);
+      }
+    }
+
     async function submitTransfer() {
       if (!keyPair) return;
       const to = document.getElementById('sendAddressInput').value.trim().toLowerCase();
@@ -1827,75 +1932,99 @@ export const WALLET_HTML = `<!DOCTYPE html>
       btn.textContent = 'Signing & Sending...';
 
       try {
-        const ledgerRes = await fetch(\`\${API_URL}/ledger/latest\`);
-        const ledger = await ledgerRes.json();
-        const prevHash = ledger.data.chain_head;
+        let maxRetries = 3;
+        let attempt = 0;
+        let prevHash = null;
+        let txJson = null;
 
-        const payload = {
-          type: 'TRANSFER',
-          sender: publicKeyHex,
-          receiver: to,
-          amount_micro: amtMicro,
-          fee_micro: '0',
-          nonce: currentNonce,
-          prev_hash: prevHash,
-          timestamp: Math.floor(Date.now() / 1000)
-        };
-
-        const canonical = \`MYCOIN_TX_V1:\${payload.type.length}:\${payload.type}:\${payload.sender.length}:\${payload.sender}:\${payload.receiver.length}:\${payload.receiver}:\${payload.amount_micro}:\${payload.fee_micro}:\${payload.nonce}:\${payload.prev_hash.length}:\${payload.prev_hash}:\${payload.timestamp}\`;
-
-        const sig = await crypto.subtle.sign(
-          { name: 'Ed25519' },
-          keyPair.privateKey,
-          new TextEncoder().encode(canonical)
-        );
-        const signatureHex = bytesToHex(new Uint8Array(sig));
-
-        const txRes = await fetch(\`\${API_URL}/tx\`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload, signature: signatureHex })
-        });
-        let txJson = await txRes.json();
-
-        // Automated Client Micro-PoW Shield Solver (Section 4.3)
-        if (!txJson.success && txJson.requires_micro_pow && txJson.challenge) {
-          showBanner('⚡ Rate limit burst exhausted. Solving 0.8s Micro-PoW...', '⏳');
-          const salt = txJson.challenge.salt;
-          let nonce = 0;
-          const powStart = Date.now();
-          while (true) {
-            const powInput = \`\${publicKeyHex.toLowerCase()}:\${salt}:\${nonce}\`;
-            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(powInput));
-            const hex = bytesToHex(new Uint8Array(buf));
-            if (hex.startsWith('0000')) {
-              break;
-            }
-            nonce++;
-            if (Date.now() - powStart > 8000) break; // 8s safety ceiling
+        while (attempt < maxRetries) {
+          attempt++;
+          if (!prevHash) {
+            const ledgerRes = await fetch(\`\${API_URL}/ledger/latest\`);
+            const ledger = await ledgerRes.json();
+            prevHash = ledger.data.chain_head;
           }
 
-          showBanner('Micro-PoW verified! Retrying payment...', '⚡');
-          const retryRes = await fetch(\`\${API_URL}/tx\`, {
+          const payload = {
+            type: 'TRANSFER',
+            sender: publicKeyHex,
+            receiver: to,
+            amount_micro: amtMicro,
+            fee_micro: '0',
+            nonce: currentNonce,
+            prev_hash: prevHash,
+            timestamp: Math.floor(Date.now() / 1000)
+          };
+
+          const canonical = \`MYCOIN_TX_V1:\${payload.type.length}:\${payload.type}:\${payload.sender.length}:\${payload.sender}:\${payload.receiver.length}:\${payload.receiver}:\${payload.amount_micro}:\${payload.fee_micro}:\${payload.nonce}:\${payload.prev_hash.length}:\${payload.prev_hash}:\${payload.timestamp}\`;
+
+          const sig = await crypto.subtle.sign(
+            { name: 'Ed25519' },
+            keyPair.privateKey,
+            new TextEncoder().encode(canonical)
+          );
+          const signatureHex = bytesToHex(new Uint8Array(sig));
+
+          btn.textContent = attempt > 1 ? \`Relinking Sequence #\${attempt}...\` : 'Submitting to Sequencer...';
+          const txRes = await fetch(\`\${API_URL}/tx\`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payload, signature: signatureHex, micro_pow: { salt, nonce } })
+            body: JSON.stringify({ payload, signature: signatureHex })
           });
-          txJson = await retryRes.json();
+          txJson = await txRes.json();
+
+          // Concurrency Auto-Relink: If another transaction moved chain head, immediately retry with new head
+          if (!txJson.success && txRes.status === 409 && (txJson.current_head || txJson.error?.includes('Stale prev_hash'))) {
+            prevHash = txJson.current_head || null;
+            continue;
+          }
+
+          // Automated Client Micro-PoW Shield Solver (Section 4.3)
+          if (!txJson.success && txJson.requires_micro_pow && txJson.challenge) {
+            showBanner('⚡ Rate limit burst exhausted. Solving 0.8s Micro-PoW...', '⏳');
+            const salt = txJson.challenge.salt;
+            let nonce = 0;
+            const powStart = Date.now();
+            while (true) {
+              const powInput = \`\${publicKeyHex.toLowerCase()}:\${salt}:\${nonce}\`;
+              const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(powInput));
+              const hex = bytesToHex(new Uint8Array(buf));
+              if (hex.startsWith('0000')) {
+                break;
+              }
+              nonce++;
+              if (Date.now() - powStart > 8000) break; // 8s safety ceiling
+            }
+
+            showBanner('Micro-PoW verified! Retrying payment...', '⚡');
+            const retryRes = await fetch(\`\${API_URL}/tx\`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ payload, signature: signatureHex, micro_pow: { salt, nonce } })
+            });
+            txJson = await retryRes.json();
+          }
+
+          break; // Succeeded or reached terminal response
         }
 
-        if (txJson.success) {
+        if (txJson && txJson.success) {
           showBanner(\`Sent \${amtVal} QBC successfully!\`, '🚀');
           document.getElementById('sendAddressInput').value = '';
           document.getElementById('sendAmountInput').value = '';
           await refreshState();
           await loadActivity();
-          switchTab('home');
-        } else if (txJson.requires_verification) {
+          showTxReceipt({
+            tx_hash: txJson.data.tx_hash,
+            amount: amtVal,
+            to: to,
+            block_height: txJson.data.block_height
+          });
+        } else if (txJson && txJson.requires_verification) {
           showBanner('🔒 Ghost Wallet: Outbound transfers locked! Link social or Turnstile in Profile.', '⚠️');
           switchTab('profile');
         } else {
-          showBanner(txJson.error, '❌');
+          showBanner((txJson && txJson.error) || 'Transfer failed', '❌');
         }
       } catch (e) {
         showBanner(e.message, '❌');
@@ -2122,6 +2251,7 @@ export const WALLET_HTML = `<!DOCTYPE html>
       await loadOrCreateWallet();
       await loadGlobalLedger();
       await loadEpochInfo();
+      checkUrlPaymentRequest();
     });
   </script>
 </body>
