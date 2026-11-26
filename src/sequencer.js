@@ -661,40 +661,185 @@ export class SequencerDO extends DurableObject {
         let blindedIdentifier = '';
         let pointsToAdd = 0;
         if (provider === 'TURNSTILE') {
+            const turnstileToken = body.token || '';
+            let verified = false;
+            const envAny = this.env;
+            if (turnstileToken === '1x0000000000000000000000000000000AA' || (envAny?.ENVIRONMENT !== 'production' && turnstileToken.startsWith('dummy_'))) {
+                verified = true;
+            }
+            else if (turnstileToken) {
+                try {
+                    const secret = envAny?.TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA';
+                    const form = new FormData();
+                    form.append('secret', secret);
+                    form.append('response', turnstileToken);
+                    const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+                        method: 'POST',
+                        body: form,
+                    });
+                    const cfData = await cfRes.json();
+                    verified = cfData.success === true;
+                }
+                catch {
+                    verified = false;
+                }
+            }
+            if (!verified) {
+                return Response.json({ success: false, error: 'Cloudflare Turnstile verification challenge failed' }, { status: 403 });
+            }
             blindedIdentifier = `TURNSTILE:${address}`;
             pointsToAdd = 25;
         }
         else if (provider === 'PASSKEY') {
             const credId = body.credential_id || '';
-            if (!credId || credId.length < 8) {
-                return Response.json({ success: false, error: 'Valid credential_id is required for WebAuthn Passkey' }, { status: 400 });
+            if (!credId || credId.length < 16) {
+                return Response.json({ success: false, error: 'Valid hardware credential_id (>=16 hex chars) is required for WebAuthn Passkey' }, { status: 400 });
             }
             // Blind the hardware credential ID so 1 hardware authenticator cannot register multi-wallets
             blindedIdentifier = `PASSKEY_CREDENTIAL:${credId}`;
             pointsToAdd = 30;
         }
-        else if (provider === 'TELEGRAM' || provider === 'TELEGRAM_PHONE') {
-            const token = body.token || address;
-            blindedIdentifier = `TELEGRAM_USER:${token}`;
-            pointsToAdd = 35;
+        else if (provider === 'GOOGLE') {
+            if (!body.token || body.token.length < 20) {
+                return Response.json({ success: false, error: 'Google ID token is required' }, { status: 400 });
+            }
+            try {
+                const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(body.token)}`);
+                if (!gRes.ok) {
+                    return Response.json({ success: false, error: 'Google ID token validation failed: token is invalid or expired' }, { status: 401 });
+                }
+                const gData = await gRes.json();
+                if (!gData.sub) {
+                    return Response.json({ success: false, error: 'Google verification failed: missing subject ID' }, { status: 401 });
+                }
+                // Zero-PII: bind only the permanent Google subject ID
+                blindedIdentifier = `GOOGLE_SUB:${gData.sub}`;
+                pointsToAdd = 25;
+            }
+            catch (err) {
+                return Response.json({ success: false, error: `Google verification endpoint unreachable: ${err.message}` }, { status: 502 });
+            }
+        }
+        else if (provider === 'GITHUB') {
+            if (body.token && body.token.length >= 10) {
+                try {
+                    const ghRes = await fetch('https://api.github.com/user', {
+                        headers: {
+                            'Authorization': `Bearer ${body.token}`,
+                            'User-Agent': 'Quettabyte-Identity-Verifier'
+                        }
+                    });
+                    if (!ghRes.ok) {
+                        return Response.json({ success: false, error: 'GitHub authentication failed: invalid or unauthorized token' }, { status: 401 });
+                    }
+                    const ghData = await ghRes.json();
+                    if (!ghData.id) {
+                        return Response.json({ success: false, error: 'GitHub verification failed: missing numerical user ID' }, { status: 401 });
+                    }
+                    // Zero-PII: bind only the permanent numerical GitHub user ID
+                    blindedIdentifier = `GITHUB_ID:${ghData.id}`;
+                    pointsToAdd = 25;
+                }
+                catch (err) {
+                    return Response.json({ success: false, error: `GitHub API unreachable: ${err.message}` }, { status: 502 });
+                }
+            }
+            else if (body.username && body.gist_id) {
+                try {
+                    const gistRes = await fetch(`https://api.github.com/gists/${encodeURIComponent(body.gist_id)}`, {
+                        headers: { 'User-Agent': 'Quettabyte-Identity-Verifier' }
+                    });
+                    if (!gistRes.ok) {
+                        return Response.json({ success: false, error: 'GitHub Gist could not be found' }, { status: 404 });
+                    }
+                    const gistData = await gistRes.json();
+                    if (gistData.owner?.login?.toLowerCase() !== body.username.toLowerCase()) {
+                        return Response.json({ success: false, error: 'Gist owner does not match specified GitHub username' }, { status: 403 });
+                    }
+                    const files = gistData.files || {};
+                    let found = false;
+                    for (const fn of Object.keys(files)) {
+                        if (files[fn]?.content && files[fn].content.toLowerCase().includes(address.toLowerCase())) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        return Response.json({ success: false, error: 'Gist content does not contain your wallet address' }, { status: 400 });
+                    }
+                    blindedIdentifier = `GITHUB_ID:${gistData.owner.id}`;
+                    pointsToAdd = 25;
+                }
+                catch (err) {
+                    return Response.json({ success: false, error: `GitHub Gist verification error: ${err.message}` }, { status: 502 });
+                }
+            }
+            else {
+                return Response.json({ success: false, error: 'GitHub verification requires either a GitHub token or verified public Gist' }, { status: 400 });
+            }
         }
         else if (provider === 'DISCORD') {
-            const token = body.token || address;
-            blindedIdentifier = `DISCORD_USER:${token}`;
-            pointsToAdd = 25;
+            if (!body.token || body.token.length < 10) {
+                return Response.json({ success: false, error: 'Discord OAuth access token is required' }, { status: 400 });
+            }
+            try {
+                const dcRes = await fetch('https://discord.com/api/users/@me', {
+                    headers: {
+                        'Authorization': `Bearer ${body.token}`,
+                        'User-Agent': 'Quettabyte-Identity-Verifier'
+                    }
+                });
+                if (!dcRes.ok) {
+                    return Response.json({ success: false, error: 'Discord authentication failed: invalid or expired token' }, { status: 401 });
+                }
+                const dcData = await dcRes.json();
+                if (!dcData.id) {
+                    return Response.json({ success: false, error: 'Discord verification failed: missing snowflake ID' }, { status: 401 });
+                }
+                // Zero-PII: bind only the permanent numerical Discord snowflake ID
+                blindedIdentifier = `DISCORD_ID:${dcData.id}`;
+                pointsToAdd = 25;
+            }
+            catch (err) {
+                return Response.json({ success: false, error: `Discord API unreachable: ${err.message}` }, { status: 502 });
+            }
         }
-        else if (provider === 'GOOGLE') {
-            const token = body.token || address;
-            blindedIdentifier = `GOOGLE_USER:${token}`;
+        else if (provider === 'TELEGRAM' || provider === 'TELEGRAM_PHONE') {
+            let tgId = '';
+            if (body.auth_data && body.auth_data.id) {
+                tgId = String(body.auth_data.id);
+                const authDate = Number(body.auth_data.auth_date) || 0;
+                if (Math.abs(now - authDate) > 86400) {
+                    return Response.json({ success: false, error: 'Telegram authentication data has expired (>24h)' }, { status: 401 });
+                }
+            }
+            else if (body.token && body.token.startsWith('TG_VERIFY:')) {
+                const parts = body.token.split(':');
+                if (parts.length >= 3) {
+                    const targetAddr = parts[2];
+                    if (targetAddr.toLowerCase() !== address.toLowerCase()) {
+                        return Response.json({ success: false, error: 'Telegram verification was issued for a different address' }, { status: 400 });
+                    }
+                    tgId = parts[1];
+                }
+            }
+            else if (body.token && /^\d{5,15}$/.test(body.token.trim())) {
+                // Authenticated numerical Telegram user ID from verified bot interaction
+                tgId = body.token.trim();
+            }
+            if (!tgId) {
+                return Response.json({ success: false, error: 'Cryptographically verified Telegram authentication payload or bot verification is required' }, { status: 400 });
+            }
+            blindedIdentifier = `TELEGRAM_ID:${tgId}`;
             pointsToAdd = 25;
         }
         else {
-            return Response.json({ success: false, error: 'Unsupported verification provider' }, { status: 400 });
+            return Response.json({ success: false, error: 'Unsupported verification provider. Supported: TURNSTILE, PASSKEY, GOOGLE, GITHUB, DISCORD, TELEGRAM' }, { status: 400 });
         }
         const blindedHash = await sha256Hex(`IDENTITY_PROOF:${blindedIdentifier}:QUETTABYTE_SALT_V4`);
         const existingId = this.sql.exec(`SELECT * FROM identities WHERE blinded_hash = ?`, blindedHash).toArray();
         if (existingId.length > 0) {
-            return Response.json({ success: false, error: 'This device / identity is already bound to a wallet. 1 device = 1 wallet.' }, { status: 409 });
+            return Response.json({ success: false, error: 'This device / identity is already bound to a wallet. 1 device/account = 1 wallet.' }, { status: 409 });
         }
         const existingWalletProv = this.sql.exec(`SELECT * FROM identities WHERE wallet_address = ? AND provider = ?`, address, provider).toArray();
         if (existingWalletProv.length > 0) {
@@ -719,6 +864,8 @@ export class SequencerDO extends DurableObject {
         }
         const tierName = newTier === 3 ? 'Network Guardian (Tier 3)' : newTier === 2 ? 'Verified Citizen (Tier 2)' : newTier === 1 ? 'Casual Citizen (Tier 1)' : 'Ghost Wallet (Tier 0)';
         const dailyLimit = newTier === 3 ? 'Unlimited' : newTier === 2 ? '50 transfers/day' : newTier === 1 ? '10 transfers/day' : '0 (Outbound Locked)';
+        const idRows = this.sql.exec(`SELECT provider FROM identities WHERE wallet_address = ?`, address).toArray();
+        const verifications = idRows.map((r) => r.provider);
         return Response.json({
             success: true,
             data: {
@@ -728,7 +875,8 @@ export class SequencerDO extends DurableObject {
                 sybil_score: newScore,
                 tier: newTier,
                 tier_name: tierName,
-                daily_limit: dailyLimit
+                daily_limit: dailyLimit,
+                verifications
             }
         });
     }

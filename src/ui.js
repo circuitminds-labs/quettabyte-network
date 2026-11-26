@@ -7,6 +7,8 @@ export const WALLET_HTML = `<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://telegram.org/js/telegram-web-app.js" async defer></script>
   <style>
     :root {
       --bg: #0a0a0c;
@@ -1213,44 +1215,86 @@ export const WALLET_HTML = `<!DOCTYPE html>
           </div>
 
           <!-- LEVEL-BY-LEVEL KYC VERIFICATION STEPS -->
-          <h3 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: #fff; letter-spacing: -0.3px;">Level-by-Level Verification</h3>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+            <h3 style="font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -0.3px;">Zero-PII Trust Stacking (Modular KYC)</h3>
+            <span style="font-size: 11px; color: var(--text-muted);">Pick any to unlock tiers</span>
+          </div>
 
-          <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
             <!-- Level 1: Turnstile Humanity Verification -->
-            <div style="padding: 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div style="padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Level 1: Human Bot Shield</div>
-                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Unlocks Tier 1 (10 transfers/day) via fast browser check</div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">🛡️ Human Bot Shield</div>
+                  <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Cloudflare Turnstile browser challenge (+25 pts)</div>
                 </div>
                 <button class="chip" id="btnVerifyTurnstile" onclick="verifyHumanityTurnstile()" style="background: var(--accent); color: #000; font-weight: 700; padding: 6px 12px;">
-                  Verify (+25 pts)
+                  Verify (+25)
                 </button>
               </div>
             </div>
 
             <!-- Level 2: WebAuthn Hardware Biometric Passkey -->
-            <div style="padding: 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div style="padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Level 2: Hardware Biometric Passkey</div>
-                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Unlocks Tier 2 (50 transfers/day) via TouchID / FaceID / YubiKey</div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">👆 Biometric Passkey</div>
+                  <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Hardware secure enclave (TouchID / FaceID) (+30 pts)</div>
                 </div>
                 <button class="chip" id="btnVerifyPasskey" onclick="registerBiometricPasskey()" style="background: #3b82f6; color: #fff; font-weight: 700; padding: 6px 12px;">
-                  Register (+30 pts)
+                  Register (+30)
                 </button>
               </div>
             </div>
 
-            <!-- Level 3: Telegram Verification -->
-            <div style="padding: 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <!-- Level 3: Google Identity -->
+            <div style="padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Level 3: Telegram Carrier Phone Check</div>
-                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Stacks +35 pts towards Tier 3 Guardian (Unlimited transfers)</div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">🌐 Google Identity</div>
+                  <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Google Identity Services ID token verification (+25 pts)</div>
                 </div>
-                <button class="chip" id="btnVerifyTelegram" onclick="linkTelegramAccount()" style="background: #0ea5e9; color: #fff; font-weight: 700; padding: 6px 12px;">
-                  Connect (+35 pts)
+                <button class="chip" id="btnVerifyGoogle" onclick="openGoogleModal()" style="background: #ea4335; color: #fff; font-weight: 700; padding: 6px 12px;">
+                  Connect (+25)
+                </button>
+              </div>
+            </div>
+
+            <!-- Level 4: GitHub Developer Account -->
+            <div style="padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">🐙 GitHub Developer</div>
+                  <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">0-scope token or public Gist verification (+25 pts)</div>
+                </div>
+                <button class="chip" id="btnVerifyGithub" onclick="openGithubModal()" style="background: #24292e; color: #fff; border: 1px solid #444; font-weight: 700; padding: 6px 12px;">
+                  Connect (+25)
+                </button>
+              </div>
+            </div>
+
+            <!-- Level 5: Discord Member Account -->
+            <div style="padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">💬 Discord Member</div>
+                  <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">OAuth2 authentication or access token (+25 pts)</div>
+                </div>
+                <button class="chip" id="btnVerifyDiscord" onclick="openDiscordModal()" style="background: #5865f2; color: #fff; font-weight: 700; padding: 6px 12px;">
+                  Connect (+25)
+                </button>
+              </div>
+            </div>
+
+            <!-- Level 6: Telegram Verified Phone/Account -->
+            <div style="padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">✈️ Telegram Account</div>
+                  <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Unforgeable Bot challenge or WebApp auth (+25 pts)</div>
+                </div>
+                <button class="chip" id="btnVerifyTelegram" onclick="openTelegramModal()" style="background: #0ea5e9; color: #fff; font-weight: 700; padding: 6px 12px;">
+                  Connect (+25)
                 </button>
               </div>
             </div>
@@ -1467,6 +1511,123 @@ export const WALLET_HTML = `<!DOCTYPE html>
       <div style="display: flex; gap: 10px;">
         <button class="cta-btn" onclick="inspectInExplorer()" style="background: var(--card-bg); border: 1px solid var(--border); color: #fff; flex: 1;">View in Explorer</button>
         <button class="cta-btn" onclick="document.getElementById('receiptSheet').classList.remove('open')" style="flex: 1;">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOOGLE IDENTITY VERIFICATION MODAL SHEET -->
+  <div class="sheet-backdrop" id="googleSheet" onclick="closeSheet(event, 'googleSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 style="font-size: 18px; font-weight: 800;">Google Identity Verification</h3>
+        <span style="font-size: 11px; font-weight: 700; color: #ea4335; background: rgba(234, 67, 53, 0.15); padding: 3px 8px; border-radius: var(--radius-full);">+25 pts</span>
+      </div>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
+        Prove unique human identity via Google Identity Services. <strong>Zero-PII guarantee:</strong> Only your permanent numerical subject ID is verified; your email address and real name are never stored.
+      </p>
+      <div id="gsiButtonContainer" style="margin-bottom: 14px; text-align: center;"></div>
+      <div class="form-group">
+        <label class="form-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Or paste Google ID Token (JWT):</label>
+        <textarea id="googleTokenInput" class="input-box" rows="2" placeholder="eyJhbGciOiJSUzI1NiIs..." style="resize: none; font-family: var(--font-mono); font-size: 12px;"></textarea>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="cta-btn" onclick="submitGoogleVerification()" style="background: #ea4335; color: #fff; margin-top: 0; flex: 1;">
+          Verify Google Token
+        </button>
+        <button class="cta-btn" onclick="document.getElementById('googleSheet').classList.remove('open')" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0; width: auto; padding: 0 20px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GITHUB IDENTITY VERIFICATION MODAL SHEET -->
+  <div class="sheet-backdrop" id="githubSheet" onclick="closeSheet(event, 'githubSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 style="font-size: 18px; font-weight: 800;">GitHub Account Verification</h3>
+        <span style="font-size: 11px; font-weight: 700; color: #fff; background: rgba(255, 255, 255, 0.15); padding: 3px 8px; border-radius: var(--radius-full);">+25 pts</span>
+      </div>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
+        Bind your developer identity without exposing repositories. <strong>Zero permissions required:</strong> A personal access token with 0 scopes verifies your account ID for $0 forever.
+      </p>
+      <div class="form-group">
+        <label class="form-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Method 1: GitHub Token (0 Scopes):</label>
+        <input type="password" id="githubTokenInput" class="input-box" placeholder="github_pat_... or ghp_..." style="font-family: var(--font-mono); font-size: 13px;">
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+          <a href="https://github.com/settings/tokens/new?scopes=&description=Quettabyte+Identity+Verification" target="_blank" style="color: var(--accent); text-decoration: none;">Click here to generate a token on GitHub with 0 scopes</a>
+        </div>
+      </div>
+      <div style="font-size: 11px; color: var(--text-secondary); text-align: center; margin: 10px 0;">— OR METHOD 2: PUBLIC GIST —</div>
+      <div class="form-group" style="display: flex; gap: 8px;">
+        <input type="text" id="githubUsernameInput" class="input-box" placeholder="GitHub username" style="flex: 1; font-size: 12px;">
+        <input type="text" id="githubGistIdInput" class="input-box" placeholder="Public Gist ID" style="flex: 1; font-size: 12px;">
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: -6px; margin-bottom: 12px;">
+        Create a public Gist containing your wallet address to verify without a token.
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="cta-btn" onclick="submitGithubVerification()" style="background: #ffffff; color: #000; margin-top: 0; flex: 1;">
+          Verify GitHub Identity
+        </button>
+        <button class="cta-btn" onclick="document.getElementById('githubSheet').classList.remove('open')" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0; width: auto; padding: 0 20px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCORD IDENTITY VERIFICATION MODAL SHEET -->
+  <div class="sheet-backdrop" id="discordSheet" onclick="closeSheet(event, 'discordSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 style="font-size: 18px; font-weight: 800;">Discord Identity Verification</h3>
+        <span style="font-size: 11px; font-weight: 700; color: #5865f2; background: rgba(88, 101, 242, 0.15); padding: 3px 8px; border-radius: var(--radius-full);">+25 pts</span>
+      </div>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
+        Authenticate via Discord. <strong>Zero-PII guarantee:</strong> Only your permanent numerical Discord snowflake ID is bound to your wallet.
+      </p>
+      <div class="form-group">
+        <label class="form-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Discord Access Token (Bearer):</label>
+        <input type="password" id="discordTokenInput" class="input-box" placeholder="Enter Discord access token..." style="font-family: var(--font-mono); font-size: 13px;">
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="cta-btn" onclick="submitDiscordVerification()" style="background: #5865f2; color: #fff; margin-top: 0; flex: 1;">
+          Verify Discord Account
+        </button>
+        <button class="cta-btn" onclick="document.getElementById('discordSheet').classList.remove('open')" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0; width: auto; padding: 0 20px;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELEGRAM IDENTITY VERIFICATION MODAL SHEET -->
+  <div class="sheet-backdrop" id="telegramSheet" onclick="closeSheet(event, 'telegramSheet')">
+    <div class="bottom-sheet" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <h3 style="font-size: 18px; font-weight: 800;">Telegram Account Verification</h3>
+        <span style="font-size: 11px; font-weight: 700; color: #0ea5e9; background: rgba(14, 165, 233, 0.15); padding: 3px 8px; border-radius: var(--radius-full);">+25 pts</span>
+      </div>
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px;">
+        Unforgeable carrier verification via official Telegram Bot or Telegram Mini App.
+      </p>
+      <div style="background: var(--card-elevated); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 14px; font-size: 12px;">
+        <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">Step 1: Open Telegram Bot</div>
+        <div style="color: var(--text-secondary); margin-bottom: 8px;">Send <code>/verify &lt;your_address&gt;</code> to get an authenticated verification token.</div>
+        <button class="chip" onclick="copyMyAddressForTelegram()" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; padding: 4px 10px; font-weight: 600;">📋 Copy Address for Bot</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Step 2: Paste Verification Token / Telegram ID:</label>
+        <input type="text" id="telegramTokenInput" class="input-box" placeholder="e.g. TG_VERIFY:12345678:... or numerical ID" style="font-family: var(--font-mono); font-size: 13px;">
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="cta-btn" onclick="submitTelegramVerification()" style="background: #0ea5e9; color: #fff; margin-top: 0; flex: 1;">
+          Verify Telegram Identity
+        </button>
+        <button class="cta-btn" onclick="document.getElementById('telegramSheet').classList.remove('open')" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0; width: auto; padding: 0 20px;">
+          Cancel
+        </button>
       </div>
     </div>
   </div>
@@ -1828,56 +1989,30 @@ export const WALLET_HTML = `<!DOCTYPE html>
           }
 
           const vers = json.data.verifications || [];
-          const btnTurnstile = document.getElementById('btnVerifyTurnstile');
-          if (btnTurnstile) {
-            if (vers.includes('TURNSTILE')) {
-              btnTurnstile.textContent = '✓ Verified';
-              btnTurnstile.disabled = true;
-              btnTurnstile.style.opacity = '0.6';
-              btnTurnstile.style.background = 'var(--card-elevated)';
-              btnTurnstile.style.color = 'var(--text-secondary)';
+          const updateBtn = (id, isVerified, doneTxt, todoTxt, activeBg, activeColor = '#fff') => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (isVerified) {
+              el.textContent = doneTxt;
+              el.disabled = true;
+              el.style.opacity = '0.6';
+              el.style.background = 'var(--card-elevated)';
+              el.style.color = 'var(--text-secondary)';
             } else {
-              btnTurnstile.textContent = 'Verify (+25 pts)';
-              btnTurnstile.disabled = false;
-              btnTurnstile.style.opacity = '1';
-              btnTurnstile.style.background = 'var(--accent)';
-              btnTurnstile.style.color = '#000';
+              el.textContent = todoTxt;
+              el.disabled = false;
+              el.style.opacity = '1';
+              el.style.background = activeBg;
+              el.style.color = activeColor;
             }
-          }
+          };
 
-          const btnPasskey = document.getElementById('btnVerifyPasskey');
-          if (btnPasskey) {
-            if (vers.includes('PASSKEY')) {
-              btnPasskey.textContent = '✓ Registered';
-              btnPasskey.disabled = true;
-              btnPasskey.style.opacity = '0.6';
-              btnPasskey.style.background = 'var(--card-elevated)';
-              btnPasskey.style.color = 'var(--text-secondary)';
-            } else {
-              btnPasskey.textContent = 'Register (+30 pts)';
-              btnPasskey.disabled = false;
-              btnPasskey.style.opacity = '1';
-              btnPasskey.style.background = '#3b82f6';
-              btnPasskey.style.color = '#fff';
-            }
-          }
-
-          const btnTelegram = document.getElementById('btnVerifyTelegram');
-          if (btnTelegram) {
-            if (vers.includes('TELEGRAM') || vers.includes('TELEGRAM_PHONE')) {
-              btnTelegram.textContent = '✓ Connected';
-              btnTelegram.disabled = true;
-              btnTelegram.style.opacity = '0.6';
-              btnTelegram.style.background = 'var(--card-elevated)';
-              btnTelegram.style.color = 'var(--text-secondary)';
-            } else {
-              btnTelegram.textContent = 'Connect (+35 pts)';
-              btnTelegram.disabled = false;
-              btnTelegram.style.opacity = '1';
-              btnTelegram.style.background = '#0ea5e9';
-              btnTelegram.style.color = '#fff';
-            }
-          }
+          updateBtn('btnVerifyTurnstile', vers.includes('TURNSTILE'), '✓ Verified', 'Verify (+25)', 'var(--accent)', '#000');
+          updateBtn('btnVerifyPasskey', vers.includes('PASSKEY'), '✓ Registered', 'Register (+30)', '#3b82f6', '#fff');
+          updateBtn('btnVerifyGoogle', vers.includes('GOOGLE'), '✓ Connected', 'Connect (+25)', '#ea4335', '#fff');
+          updateBtn('btnVerifyGithub', vers.includes('GITHUB'), '✓ Connected', 'Connect (+25)', '#24292e', '#fff');
+          updateBtn('btnVerifyDiscord', vers.includes('DISCORD'), '✓ Connected', 'Connect (+25)', '#5865f2', '#fff');
+          updateBtn('btnVerifyTelegram', vers.includes('TELEGRAM') || vers.includes('TELEGRAM_PHONE'), '✓ Connected', 'Connect (+25)', '#0ea5e9', '#fff');
 
           // Desktop Widget Sync
           document.getElementById('dtTierBadge').textContent = \`Tier \${tier}\`;
@@ -2382,37 +2517,190 @@ export const WALLET_HTML = `<!DOCTYPE html>
       }
     }
 
-    // LEVEL 3: TELEGRAM CARRIER PHONE CHECK
-    async function linkTelegramAccount() {
+    // MODULAR ZERO-PII IDENTITY VERIFICATION (GOOGLE, GITHUB, DISCORD, TELEGRAM)
+    function openGoogleModal() {
       if (!publicKeyHex) return;
-      const tgUsername = prompt('Enter your Telegram handle to verify (e.g. @username):');
-      if (!tgUsername) return;
-      const clean = tgUsername.trim().replace(/^@/, '');
-      if (clean.length < 3) {
-        showBanner('Enter a valid Telegram handle', '⚠️');
+      document.getElementById('googleSheet').classList.add('open');
+      try {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          window.google.accounts.id.initialize({
+            client_id: '109283749281-quettabyte.apps.googleusercontent.com',
+            callback: (resp) => {
+              if (resp.credential) {
+                submitGoogleVerification(resp.credential);
+              }
+            }
+          });
+          const container = document.getElementById('gsiButtonContainer');
+          if (container) {
+            container.innerHTML = '';
+            window.google.accounts.id.renderButton(container, { theme: 'outline', size: 'large' });
+          }
+        }
+      } catch (e) {
+        console.warn('GIS init:', e);
+      }
+    }
+
+    async function submitGoogleVerification(tokenOverride) {
+      if (!publicKeyHex) return;
+      const token = tokenOverride || (document.getElementById('googleTokenInput')?.value || '').trim();
+      if (!token || token.length < 20) {
+        showBanner('Please provide a valid Google ID token (JWT)', '⚠️');
         return;
       }
-
-      showBanner('Verifying Telegram carrier account...', '⏳');
+      showBanner('Verifying Google Identity with sequencer...', '⏳');
       try {
         const res = await fetch(\`\${API_URL}/identity/link\`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             address: publicKeyHex,
-            provider: 'TELEGRAM',
-            token: clean
+            provider: 'GOOGLE',
+            token: token
           })
         });
         const json = await res.json();
         if (json.success) {
-          showBanner('🎉 Telegram Verified! +35 Trust Score awarded.', '✈️');
+          showBanner('🎉 Google Identity Verified! +25 Trust Score awarded.', '🌐');
+          document.getElementById('googleSheet').classList.remove('open');
+          await refreshState();
+        } else {
+          showBanner(json.error || 'Google verification failed', '❌');
+        }
+      } catch (e) {
+        showBanner('Error verifying Google: ' + e.message, '❌');
+      }
+    }
+
+    function openGithubModal() {
+      if (!publicKeyHex) return;
+      document.getElementById('githubSheet').classList.add('open');
+    }
+
+    async function submitGithubVerification() {
+      if (!publicKeyHex) return;
+      const token = (document.getElementById('githubTokenInput')?.value || '').trim();
+      const username = (document.getElementById('githubUsernameInput')?.value || '').trim();
+      const gistId = (document.getElementById('githubGistIdInput')?.value || '').trim();
+
+      const payload = { address: publicKeyHex, provider: 'GITHUB' };
+      if (token) {
+        payload.token = token;
+      } else if (username && gistId) {
+        payload.username = username;
+        payload.gist_id = gistId;
+      } else {
+        showBanner('Provide a 0-scope GitHub token OR your username + public Gist ID', '⚠️');
+        return;
+      }
+
+      showBanner('Verifying GitHub Developer identity with sequencer...', '⏳');
+      try {
+        const res = await fetch(\`\${API_URL}/identity/link\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner('🎉 GitHub Identity Verified! +25 Trust Score awarded.', '🐙');
+          document.getElementById('githubSheet').classList.remove('open');
+          await refreshState();
+        } else {
+          showBanner(json.error || 'GitHub verification failed', '❌');
+        }
+      } catch (e) {
+        showBanner('Error verifying GitHub: ' + e.message, '❌');
+      }
+    }
+
+    function openDiscordModal() {
+      if (!publicKeyHex) return;
+      document.getElementById('discordSheet').classList.add('open');
+    }
+
+    async function submitDiscordVerification() {
+      if (!publicKeyHex) return;
+      const token = (document.getElementById('discordTokenInput')?.value || '').trim();
+      if (!token || token.length < 10) {
+        showBanner('Please enter your Discord access token', '⚠️');
+        return;
+      }
+
+      showBanner('Verifying Discord account with sequencer...', '⏳');
+      try {
+        const res = await fetch(\`\${API_URL}/identity/link\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: publicKeyHex,
+            provider: 'DISCORD',
+            token: token
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner('🎉 Discord Account Verified! +25 Trust Score awarded.', '💬');
+          document.getElementById('discordSheet').classList.remove('open');
+          await refreshState();
+        } else {
+          showBanner(json.error || 'Discord verification failed', '❌');
+        }
+      } catch (e) {
+        showBanner('Error verifying Discord: ' + e.message, '❌');
+      }
+    }
+
+    function openTelegramModal() {
+      if (!publicKeyHex) return;
+      document.getElementById('telegramSheet').classList.add('open');
+    }
+
+    function copyMyAddressForTelegram() {
+      if (!publicKeyHex) return;
+      navigator.clipboard.writeText(publicKeyHex);
+      showBanner('Wallet address copied! Send /verify ' + publicKeyHex.slice(0, 8) + '... to the bot', '📋');
+    }
+
+    async function submitTelegramVerification() {
+      if (!publicKeyHex) return;
+      const token = (document.getElementById('telegramTokenInput')?.value || '').trim();
+      
+      let authData = null;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        authData = window.Telegram.WebApp.initDataUnsafe.user;
+      }
+
+      if (!token && !authData) {
+        showBanner('Enter verification code from Telegram Bot or open inside Telegram Mini App', '⚠️');
+        return;
+      }
+
+      showBanner('Verifying Telegram carrier account with sequencer...', '⏳');
+      try {
+        const bodyPayload = {
+          address: publicKeyHex,
+          provider: 'TELEGRAM'
+        };
+        if (token) bodyPayload.token = token;
+        if (authData) bodyPayload.auth_data = authData;
+
+        const res = await fetch(\`\${API_URL}/identity/link\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner('🎉 Telegram Verified! +25 Trust Score awarded.', '✈️');
+          document.getElementById('telegramSheet').classList.remove('open');
           await refreshState();
         } else {
           showBanner(json.error || 'Telegram verification failed', '❌');
         }
       } catch (e) {
-        showBanner('Error linking: ' + e.message, '❌');
+        showBanner('Error linking Telegram: ' + e.message, '❌');
       }
     }
 

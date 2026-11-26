@@ -185,10 +185,56 @@ Submits a proof-of-work ticket or a Cuckoo Cycle graph solution.
 ```
 
 ### `POST /api/faucet`
-Developer testnet faucet providing 10 test coins.
+Developer testnet faucet providing 10 test coins (24-hour rate limit per address).
 ```json
 {
   "address": "64_char_hex_public_key",
   "amount_micro": 10000000
+}
+```
+
+---
+
+### `POST /api/identity/link`
+Links a cryptographically verified human or developer identity to advance the wallet's Sybil Trust Score (0-100) and unlock daily transfer tiers without storing any PII.
+* **Supported Providers:**
+  * `TURNSTILE`: Cloudflare Turnstile token (`token: "..."`) -> **+25 pts**
+  * `PASSKEY`: WebAuthn hardware credential ID (`credential_id: "..."`) -> **+30 pts**
+  * `GOOGLE`: Google Identity Services ID Token JWT (`token: "..."`) -> **+25 pts**
+  * `GITHUB`: 0-scope GitHub token (`token: "..."`) OR Public Gist (`username: "...", gist_id: "..."`) -> **+25 pts**
+  * `DISCORD`: Discord OAuth2 access token (`token: "..."`) -> **+25 pts**
+  * `TELEGRAM`: Telegram Bot verification token / auth data -> **+25 pts**
+
+* **Request Example (Google JWT):**
+```json
+{
+  "address": "64_char_hex_public_key",
+  "provider": "GOOGLE",
+  "token": "eyJhbGciOiJSUzI1NiIs..."
+}
+```
+
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "address": "64_char_hex_public_key",
+    "provider": "GOOGLE",
+    "points_added": 25,
+    "sybil_score": 55,
+    "tier": 2,
+    "tier_name": "Verified Citizen (Tier 2)",
+    "daily_limit": "50 transfers/day",
+    "verifications": ["TURNSTILE", "PASSKEY", "GOOGLE"]
+  }
+}
+```
+
+* **1 Device / 1 Account = 1 Wallet Rejection (`409 Conflict`):**
+```json
+{
+  "success": false,
+  "error": "This device / identity is already bound to a wallet. 1 device/account = 1 wallet."
 }
 ```

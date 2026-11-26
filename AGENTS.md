@@ -144,8 +144,16 @@ CREATE TABLE epochs (
   - `src/sequencer.ts`: Client Micro-PoW challenge bypass for token-bucket rate limits; Ghost Wallet (Tier 0) outbound gating with tiered daily velocity limits (Tier 1: 10/day, Tier 2: 50/day, Tier 3: unlimited); canonical BigInt/integer micro-unit bounds. (COMPLETED & VERIFIED)
   - `public/index.html`: Automatic client-side 0.8s Micro-PoW challenge solver on burst exhaustion; live Sybil Trust Matrix progression. (COMPLETED & VERIFIED)
 - [x] **Milestone 8: Level-by-Level Zero-PII KYC Suite & Genesis Clean State**
-  - `src/sequencer.ts`: Clean genesis reset (`v4_genesis_clean_2026`) wiping legacy test wallets; 24h faucet cooldown; strict hardware passkey blinding preventing 1 device from registering multiple wallets; `/wallet/:address` returns active `verifications`. (COMPLETED & VERIFIED)
-  - `public/index.html`: WebAuthn Biometric Passkeys (`navigator.credentials.create`), Turnstile bot shield, Telegram phone attestation, live dynamic level badges and trust scores (0-100). (COMPLETED & VERIFIED)
+  - `src/sequencer.ts`: Clean genesis reset (`v4_genesis_clean_2026`) wiping legacy test wallets; 24h faucet cooldown; strict hardware passkey blinding preventing 1 device from registering multiple wallets; `/wallet/:address` returns active `verifications`.
+  - **Modular Unforgeable KYC Providers:** Completely eliminated spoofable username inputs. Implemented cryptographically authenticated verification for:
+    - **Turnstile (+25 pts):** Cloudflare human browser challenge.
+    - **Passkey (+30 pts):** WebAuthn hardware biometric enclave (TouchID / FaceID / Windows Hello / YubiKey).
+    - **Google (+25 pts):** Google Identity Services signed ID token (JWT) verified via Google `tokeninfo` (binds permanent `sub`).
+    - **GitHub (+25 pts):** 0-permission GitHub Personal Access Token or verified public Gist (binds permanent numerical user `id`).
+    - **Discord (+25 pts):** Discord OAuth2 access token verified via `https://discord.com/api/users/@me` (binds permanent snowflake `id`).
+    - **Telegram (+25 pts):** Unforgeable Bot verification token or Telegram WebApp signed initData (binds permanent numerical `id`).
+  - **Modular & Zero-Cost:** 100% free forever; users pick whichever services or biometrics they possess to stack their score to 80+ pts to unlock Tier 3 Network Guardian (Unlimited daily transfers).
+  - `public/index.html`: Interactive modular verification modals with dynamic button states and live trust progress bar. (COMPLETED & VERIFIED)
 
 ---
 

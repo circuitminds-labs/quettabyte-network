@@ -58,7 +58,8 @@ def main():
     print(f"[*] Fetching canonical ledger export from: {source}")
 
     if source.startswith("http://") or source.startswith("https://"):
-        req = urllib.request.Request(source, headers={"User-Agent": "MyCoin-Auditor/1.0"})
+        export_url = source if "/ledger/export" in source else source.rstrip("/") + "/api/ledger/export"
+        req = urllib.request.Request(export_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Quettabyte-Auditor/4.0"})
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     else:
