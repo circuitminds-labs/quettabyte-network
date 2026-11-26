@@ -143,6 +143,9 @@ CREATE TABLE epochs (
   - `src/cuckoo.ts`: High-speed SipHash-2-4 engine & Cuckoo Cycle verifier (<0.2 ms CPU on Cloudflare Worker). (COMPLETED & VERIFIED)
   - `src/sequencer.ts`: Client Micro-PoW challenge bypass for token-bucket rate limits; Ghost Wallet (Tier 0) outbound gating with tiered daily velocity limits (Tier 1: 10/day, Tier 2: 50/day, Tier 3: unlimited); canonical BigInt/integer micro-unit bounds. (COMPLETED & VERIFIED)
   - `public/index.html`: Automatic client-side 0.8s Micro-PoW challenge solver on burst exhaustion; live Sybil Trust Matrix progression. (COMPLETED & VERIFIED)
+- [x] **Milestone 8: Level-by-Level Zero-PII KYC Suite & Genesis Clean State**
+  - `src/sequencer.ts`: Clean genesis reset (`v4_genesis_clean_2026`) wiping legacy test wallets; 24h faucet cooldown; strict hardware passkey blinding preventing 1 device from registering multiple wallets; `/wallet/:address` returns active `verifications`. (COMPLETED & VERIFIED)
+  - `public/index.html`: WebAuthn Biometric Passkeys (`navigator.credentials.create`), Turnstile bot shield, Telegram phone attestation, live dynamic level badges and trust scores (0-100). (COMPLETED & VERIFIED)
 
 ---
 

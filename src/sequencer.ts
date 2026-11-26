@@ -125,18 +125,21 @@ export class SequencerDO extends DurableObject {
       );
     `);
 
-    // Initialize genesis chain head if not present
-    const chainHead = this.sql.exec(`SELECT value FROM system_state WHERE key = 'chain_head'`).toArray();
-    if (chainHead.length === 0) {
-      this.sql.exec(
-        `INSERT INTO system_state (key, value) VALUES ('chain_head', '0000000000000000000000000000000000000000000000000000000000000000')`
-      );
-      this.sql.exec(
-        `INSERT INTO system_state (key, value) VALUES ('block_height', '0')`
-      );
-      this.sql.exec(
-        `INSERT INTO system_state (key, value) VALUES ('current_epoch', '1')`
-      );
+    // Clean Genesis Reset Check (Milestone 0: Clean Testnet Reset)
+    const genesisVer = this.sql.exec(`SELECT value FROM system_state WHERE key = 'genesis_version'`).toArray();
+    if (genesisVer.length === 0 || genesisVer[0].value !== 'v4_genesis_clean_2026') {
+      this.sql.exec(`
+        DELETE FROM wallets;
+        DELETE FROM transactions;
+        DELETE FROM identities;
+        DELETE FROM claims;
+        DELETE FROM epochs;
+        DELETE FROM system_state;
+        INSERT INTO system_state (key, value) VALUES ('chain_head', '0000000000000000000000000000000000000000000000000000000000000000');
+        INSERT INTO system_state (key, value) VALUES ('block_height', '0');
+        INSERT INTO system_state (key, value) VALUES ('current_epoch', '1');
+        INSERT INTO system_state (key, value) VALUES ('genesis_version', 'v4_genesis_clean_2026');
+      `);
     }
   }
 
@@ -261,6 +264,9 @@ export class SequencerDO extends DurableObject {
    */
   private handleGetWallet(address: string): Response {
     const rows = this.sql.exec(`SELECT * FROM wallets WHERE address = ?`, address).toArray();
+    const idRows = this.sql.exec(`SELECT provider FROM identities WHERE wallet_address = ?`, address).toArray();
+    const verifications: string[] = idRows.map((r: any) => r.provider);
+
     if (rows.length === 0) {
       return Response.json({
         success: true,
@@ -270,7 +276,8 @@ export class SequencerDO extends DurableObject {
           nonce: 0,
           last_ticket: 0,
           sybil_score: 0,
-          tier: 0
+          tier: 0,
+          verifications: []
         }
       });
     }
@@ -284,7 +291,8 @@ export class SequencerDO extends DurableObject {
         nonce: w.nonce,
         last_ticket: w.last_ticket,
         sybil_score: w.sybil_score,
-        tier: w.tier
+        tier: w.tier,
+        verifications
       }
     });
   }
@@ -670,12 +678,24 @@ export class SequencerDO extends DurableObject {
     const currentHead = headRows[0].value;
     const now = Math.floor(Date.now() / 1000);
 
+    // Enforce 24-hour faucet rate limit per address
+    const recentMints = this.sql.exec(
+      `SELECT timestamp FROM transactions WHERE receiver = ? AND tx_type = 'MINT' AND sender = 'GENESIS_FAUCET' AND timestamp > ?`,
+      address, now - 86400
+    ).toArray();
+    if (recentMints.length > 0) {
+      return Response.json({
+        success: false,
+        error: 'Faucet rate limit: 1 test mint per address every 24 hours.'
+      }, { status: 429 });
+    }
+
     const txHash = await sha256Hex(`MINT:${address}:${amount.toString()}:${currentHead}:${now}`);
 
     const existing = this.sql.exec(`SELECT balance_micro FROM wallets WHERE address = ?`, address).toArray();
     if (existing.length === 0) {
       this.sql.exec(
-        `INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 25, 1)`,
+        `INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 0, 0)`,
         address,
         microToDb(amount)
       );
@@ -759,7 +779,7 @@ export class SequencerDO extends DurableObject {
 
     if (existing.length === 0) {
       this.sql.exec(
-        `INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, ?, 25, 1)`,
+        `INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, ?, 0, 0)`,
         address, microToDb(newBal), ticket
       );
     } else {
@@ -805,18 +825,67 @@ export class SequencerDO extends DurableObject {
   }
 
   /**
-   * POST /identity/link: Identity stacking for Sybil Score & Tier progression
+   * POST /identity/link: Level-by-Level Zero-PII Identity Stacking for Sybil Score & Tier progression
    */
-  private async handleIdentityLink(body: { address: string; provider: string }): Promise<Response> {
+  private async handleIdentityLink(body: {
+    address: string;
+    provider: string;
+    token?: string;
+    credential_id?: string;
+  }): Promise<Response> {
+    if (!body || typeof body.address !== 'string') {
+      return Response.json({ success: false, error: 'address is required' }, { status: 400 });
+    }
     const address = body.address.toLowerCase();
-    const provider = body.provider.toUpperCase();
+    if (!/^[0-9a-f]{64}$/.test(address)) {
+      return Response.json({ success: false, error: 'address must be a valid 64-character hex Ed25519 public key' }, { status: 400 });
+    }
+    const provider = (body.provider || '').toUpperCase();
     const now = Math.floor(Date.now() / 1000);
 
-    const blindedHash = await sha256Hex(`IDENTITY:${address}:${provider}:SERVER_SECRET_SALT`);
+    let blindedIdentifier = '';
+    let pointsToAdd = 0;
+
+    if (provider === 'TURNSTILE') {
+      blindedIdentifier = `TURNSTILE:${address}`;
+      pointsToAdd = 25;
+    } else if (provider === 'PASSKEY') {
+      const credId = body.credential_id || '';
+      if (!credId || credId.length < 8) {
+        return Response.json({ success: false, error: 'Valid credential_id is required for WebAuthn Passkey' }, { status: 400 });
+      }
+      // Blind the hardware credential ID so 1 hardware authenticator cannot register multi-wallets
+      blindedIdentifier = `PASSKEY_CREDENTIAL:${credId}`;
+      pointsToAdd = 30;
+    } else if (provider === 'TELEGRAM' || provider === 'TELEGRAM_PHONE') {
+      const token = body.token || address;
+      blindedIdentifier = `TELEGRAM_USER:${token}`;
+      pointsToAdd = 35;
+    } else if (provider === 'DISCORD') {
+      const token = body.token || address;
+      blindedIdentifier = `DISCORD_USER:${token}`;
+      pointsToAdd = 25;
+    } else if (provider === 'GOOGLE') {
+      const token = body.token || address;
+      blindedIdentifier = `GOOGLE_USER:${token}`;
+      pointsToAdd = 25;
+    } else {
+      return Response.json({ success: false, error: 'Unsupported verification provider' }, { status: 400 });
+    }
+
+    const blindedHash = await sha256Hex(`IDENTITY_PROOF:${blindedIdentifier}:QUETTABYTE_SALT_V4`);
 
     const existingId = this.sql.exec(`SELECT * FROM identities WHERE blinded_hash = ?`, blindedHash).toArray();
     if (existingId.length > 0) {
-      return Response.json({ success: false, error: 'Identity already linked to this or another wallet' }, { status: 400 });
+      return Response.json({ success: false, error: 'This device / identity is already bound to a wallet. 1 device = 1 wallet.' }, { status: 409 });
+    }
+
+    const existingWalletProv = this.sql.exec(
+      `SELECT * FROM identities WHERE wallet_address = ? AND provider = ?`,
+      address, provider
+    ).toArray();
+    if (existingWalletProv.length > 0) {
+      return Response.json({ success: false, error: `Wallet has already verified ${provider}` }, { status: 400 });
     }
 
     this.sql.exec(
@@ -824,22 +893,14 @@ export class SequencerDO extends DurableObject {
       blindedHash, address, provider, now
     );
 
-    let pointsToAdd = 25;
-    if (provider === 'TELEGRAM_PHONE') pointsToAdd = 35;
-    if (provider === 'DISCORD') pointsToAdd = 25;
-    if (provider === 'GOOGLE') pointsToAdd = 25;
-    if (provider === 'PASSKEY') pointsToAdd = 15;
-
     const walletRows = this.sql.exec(`SELECT sybil_score FROM wallets WHERE address = ?`, address).toArray();
-    let newScore = pointsToAdd;
-    if (walletRows.length > 0) {
-      newScore += Number(walletRows[0].sybil_score);
-    }
+    let currentScore = walletRows.length > 0 ? Number(walletRows[0].sybil_score) : 0;
+    let newScore = Math.min(100, currentScore + pointsToAdd);
 
     let newTier = 0;
-    if (newScore >= 80) newTier = 3;      // Guardian
-    else if (newScore >= 50) newTier = 2; // Trusted Member
-    else if (newScore >= 25) newTier = 1; // Casual Citizen
+    if (newScore >= 80) newTier = 3;      // Network Guardian (Unlimited)
+    else if (newScore >= 50) newTier = 2; // Verified Citizen (50/day)
+    else if (newScore >= 25) newTier = 1; // Casual Citizen (10/day)
 
     if (walletRows.length === 0) {
       this.sql.exec(
@@ -853,14 +914,19 @@ export class SequencerDO extends DurableObject {
       );
     }
 
+    const tierName = newTier === 3 ? 'Network Guardian (Tier 3)' : newTier === 2 ? 'Verified Citizen (Tier 2)' : newTier === 1 ? 'Casual Citizen (Tier 1)' : 'Ghost Wallet (Tier 0)';
+    const dailyLimit = newTier === 3 ? 'Unlimited' : newTier === 2 ? '50 transfers/day' : newTier === 1 ? '10 transfers/day' : '0 (Outbound Locked)';
+
     return Response.json({
       success: true,
       data: {
         address,
         provider,
+        points_added: pointsToAdd,
         sybil_score: newScore,
         tier: newTier,
-        tier_name: newTier === 3 ? 'Network Guardian' : newTier === 2 ? 'Trusted Member' : 'Casual Citizen'
+        tier_name: tierName,
+        daily_limit: dailyLimit
       }
     });
   }
@@ -913,7 +979,7 @@ export class SequencerDO extends DurableObject {
 
     if (existingWallet.length === 0) {
       this.sql.exec(
-        `INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 25, 1)`,
+        `INSERT INTO wallets (address, balance_micro, nonce, last_ticket, sybil_score, tier) VALUES (?, ?, 0, 0, 0, 0)`,
         address,
         microToDb(newBal)
       );

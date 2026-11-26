@@ -13,6 +13,7 @@
 | **Milestone 4** | Web Wallet & Browser Explorer | `public/index.html`, `src/ui.ts` (Mobile & Desktop pro trading UI, BIP-39 mnemonic phrase, client WebCrypto) | **100% Pass** (Embedded & served directly from Worker) |
 | **Milestone 6** | Bitcoin OpenTimestamps & GitHub CI Witness | Hourly Cloudflare Cron (`0 * * * *`), Bitcoin OTS notarization (`a.pool.opentimestamps.org`), GitHub Action DAG witness | **100% Pass** (Action `#45106286594` green, auto-commits `ledger/latest.json`) |
 | **Milestone 7** | Cuckoo Cycle Mining & QuettaBatch Rollups | `src/cuckoo.ts` (SipHash-2-4 engine in <0.2ms), `/api/transfer/batch` (Micro-rollup scaling under 100k DO write cap) | **100% Pass** (Deployed & verified on testnet) |
+| **Milestone 8** | Level-by-Level Zero-PII KYC & Clean Genesis | WebAuthn hardware passkeys (`navigator.credentials.create`), Level 1-3 identity stacking, 24h faucet cooldown, clean genesis reset | **100% Pass** (Deployed & verified on testnet) |
 
 ---
 

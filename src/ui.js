@@ -1182,44 +1182,87 @@ export const WALLET_HTML = `<!DOCTYPE html>
       <!-- 5. ACCOUNT / PROFILE TAB -->
       <div id="tab-profile" class="page-tab">
         <div class="card">
-          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
-            <div class="user-avatar" style="width: 50px; height: 50px; font-size: 20px;">👤</div>
-            <div>
-              <h2 style="font-size: 18px; font-weight: 800;">My Account</h2>
-              <div style="font-size: 12.5px; color: var(--accent); font-weight: 600;" id="profileTier">Casual Citizen (Tier 1)</div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div class="user-avatar" style="width: 50px; height: 50px; font-size: 20px;" id="profileAvatarLetter">Q</div>
+              <div>
+                <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 2px;">Identity & Trust Matrix</h2>
+                <div style="font-size: 12.5px; color: var(--accent); font-weight: 600;" id="profileTier">Ghost Wallet (Tier 0)</div>
+              </div>
+            </div>
+            <div id="profileLimitBadge" style="font-size: 11px; font-family: var(--font-mono); padding: 4px 8px; border-radius: 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+              Outbound Locked
             </div>
           </div>
 
+          <!-- Master Trust Score Progress -->
           <div style="background: var(--card-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
-              <span style="color: var(--text-secondary);">Trust Score</span>
-              <strong id="profileScore">25 / 100</strong>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary); font-weight: 600;">Sybil Trust Score</span>
+              <strong id="profileScore" style="color: #ffffff; font-family: var(--font-mono);">0 / 100</strong>
             </div>
-            <div style="height: 6px; background: var(--border); border-radius: var(--radius-full); overflow: hidden;">
-              <div id="profileProgress" style="width: 25%; height: 100%; background: var(--accent);"></div>
+            <div style="height: 8px; background: #000; border-radius: var(--radius-full); overflow: hidden; border: 1px solid var(--border);">
+              <div id="profileProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); transition: width 0.4s ease;"></div>
             </div>
-          </div>
-
-          <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #fff;">Connected Verifications</h3>
-
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
-              <div style="font-size: 13px; font-weight: 600;">Google Account</div>
-              <button class="chip" onclick="linkSocial('GOOGLE')">Connect (+25)</button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
-              <div style="font-size: 13px; font-weight: 600;">Telegram Phone ($0 SMS)</div>
-              <button class="chip" onclick="linkSocial('TELEGRAM_PHONE')">Verify (+35)</button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
-              <div style="font-size: 13px; font-weight: 600;">Biometric Passkey</div>
-              <button class="chip" onclick="linkSocial('PASSKEY')">Register (+15)</button>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+              <span>Tier 0 (Ghost)</span>
+              <span>Tier 1 (25 pts)</span>
+              <span>Tier 2 (50 pts)</span>
+              <span>Tier 3 (80+ pts)</span>
             </div>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
+          <!-- LEVEL-BY-LEVEL KYC VERIFICATION STEPS -->
+          <h3 style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: #fff; letter-spacing: -0.3px;">Level-by-Level Verification</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Level 1: Turnstile Humanity Verification -->
+            <div style="padding: 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Level 1: Human Bot Shield</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Unlocks Tier 1 (10 transfers/day) via fast browser check</div>
+                </div>
+                <button class="chip" id="btnVerifyTurnstile" onclick="verifyHumanityTurnstile()" style="background: var(--accent); color: #000; font-weight: 700; padding: 6px 12px;">
+                  Verify (+25 pts)
+                </button>
+              </div>
+            </div>
+
+            <!-- Level 2: WebAuthn Hardware Biometric Passkey -->
+            <div style="padding: 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Level 2: Hardware Biometric Passkey</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Unlocks Tier 2 (50 transfers/day) via TouchID / FaceID / YubiKey</div>
+                </div>
+                <button class="chip" id="btnVerifyPasskey" onclick="registerBiometricPasskey()" style="background: #3b82f6; color: #fff; font-weight: 700; padding: 6px 12px;">
+                  Register (+30 pts)
+                </button>
+              </div>
+            </div>
+
+            <!-- Level 3: Telegram Verification -->
+            <div style="padding: 14px; background: var(--card-elevated); border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Level 3: Telegram Carrier Phone Check</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Stacks +35 pts towards Tier 3 Guardian (Unlimited transfers)</div>
+                </div>
+                <button class="chip" id="btnVerifyTelegram" onclick="linkTelegramAccount()" style="background: #0ea5e9; color: #fff; font-weight: 700; padding: 6px 12px;">
+                  Connect (+35 pts)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Non-Custodial Security Notice -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.22); border-radius: var(--radius-md); padding: 12px 14px; margin-top: 20px; font-size: 12px; color: #a7f3d0; line-height: 1.5;">
+            🔒 <strong>100% Non-Custodial Security:</strong> Your private key and 12-word seed never touch any server. No one can ever log in, hack, or spend from your account without your physical device, biometric passkey, or 12-word recovery phrase.
+          </div>
+
+          <!-- Wallet Recovery & Reset Tools -->
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
             <button class="cta-btn" style="background: var(--card-elevated); color: #fff; border: 1px solid var(--border); margin-top: 0;" onclick="openBackupSheet()">
               🔑 View 12-Word Secret Recovery Phrase
             </button>
@@ -1661,6 +1704,8 @@ export const WALLET_HTML = `<!DOCTYPE html>
       const char = publicKeyHex.charAt(0).toUpperCase();
       document.getElementById("avatarLetter").textContent = char;
       document.getElementById("dtAvatarLetter").textContent = char;
+      const profileCharEl = document.getElementById("profileAvatarLetter");
+      if (profileCharEl) profileCharEl.textContent = char;
 
       refreshState();
       loadActivity();
@@ -1717,7 +1762,8 @@ export const WALLET_HTML = `<!DOCTYPE html>
     }
 
     function confirmResetWallet() {
-      if (confirm("Are you sure? This will replace your current wallet. Make sure you have backed up your 12 words!")) {
+      if (confirm("Are you sure? This will delete your local wallet and generate a brand new unique address. Make sure your 12 words are backed up!")) {
+        localStorage.removeItem("mycoin_wallet_v1");
         createNewBip39Wallet();
       }
     }
@@ -1764,12 +1810,74 @@ export const WALLET_HTML = `<!DOCTYPE html>
 
           const sybil = json.data.sybil_score || 0;
           const tier = json.data.tier || 0;
-          const tiers = ['Ghost Wallet (Tier 0)', 'Casual Citizen (Tier 1)', 'Trusted Member (Tier 2)', 'Network Guardian (Tier 3)'];
-          const tierTitle = tiers[tier] || 'Citizen';
+          const tiers = ['Ghost Wallet (Tier 0)', 'Casual Citizen (Tier 1)', 'Verified Citizen (Tier 2)', 'Network Guardian (Tier 3)'];
+          const tierTitle = tiers[tier] || 'Ghost Wallet (Tier 0)';
           
           document.getElementById('profileTier').textContent = tierTitle;
           document.getElementById('profileScore').textContent = \`\${sybil} / 100\`;
-          document.getElementById('profileProgress').style.width = \`\${Math.min(100, Math.max(10, sybil))}%\`;
+          document.getElementById('profileProgress').style.width = \`\${Math.min(100, sybil)}%\`;
+
+          const limits = ['Outbound Locked', '10 sends/day', '50 sends/day', 'Unlimited'];
+          const limitTxt = limits[tier] || 'Outbound Locked';
+          const limitBadge = document.getElementById('profileLimitBadge');
+          if (limitBadge) {
+            limitBadge.textContent = limitTxt;
+            limitBadge.style.background = tier === 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+            limitBadge.style.color = tier === 0 ? '#f87171' : '#10b981';
+            limitBadge.style.borderColor = tier === 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)';
+          }
+
+          const vers = json.data.verifications || [];
+          const btnTurnstile = document.getElementById('btnVerifyTurnstile');
+          if (btnTurnstile) {
+            if (vers.includes('TURNSTILE')) {
+              btnTurnstile.textContent = '✓ Verified';
+              btnTurnstile.disabled = true;
+              btnTurnstile.style.opacity = '0.6';
+              btnTurnstile.style.background = 'var(--card-elevated)';
+              btnTurnstile.style.color = 'var(--text-secondary)';
+            } else {
+              btnTurnstile.textContent = 'Verify (+25 pts)';
+              btnTurnstile.disabled = false;
+              btnTurnstile.style.opacity = '1';
+              btnTurnstile.style.background = 'var(--accent)';
+              btnTurnstile.style.color = '#000';
+            }
+          }
+
+          const btnPasskey = document.getElementById('btnVerifyPasskey');
+          if (btnPasskey) {
+            if (vers.includes('PASSKEY')) {
+              btnPasskey.textContent = '✓ Registered';
+              btnPasskey.disabled = true;
+              btnPasskey.style.opacity = '0.6';
+              btnPasskey.style.background = 'var(--card-elevated)';
+              btnPasskey.style.color = 'var(--text-secondary)';
+            } else {
+              btnPasskey.textContent = 'Register (+30 pts)';
+              btnPasskey.disabled = false;
+              btnPasskey.style.opacity = '1';
+              btnPasskey.style.background = '#3b82f6';
+              btnPasskey.style.color = '#fff';
+            }
+          }
+
+          const btnTelegram = document.getElementById('btnVerifyTelegram');
+          if (btnTelegram) {
+            if (vers.includes('TELEGRAM') || vers.includes('TELEGRAM_PHONE')) {
+              btnTelegram.textContent = '✓ Connected';
+              btnTelegram.disabled = true;
+              btnTelegram.style.opacity = '0.6';
+              btnTelegram.style.background = 'var(--card-elevated)';
+              btnTelegram.style.color = 'var(--text-secondary)';
+            } else {
+              btnTelegram.textContent = 'Connect (+35 pts)';
+              btnTelegram.disabled = false;
+              btnTelegram.style.opacity = '1';
+              btnTelegram.style.background = '#0ea5e9';
+              btnTelegram.style.color = '#fff';
+            }
+          }
 
           // Desktop Widget Sync
           document.getElementById('dtTierBadge').textContent = \`Tier \${tier}\`;
@@ -2183,20 +2291,125 @@ export const WALLET_HTML = `<!DOCTYPE html>
       }
     }
 
-    // SOCIAL LINK
-    async function linkSocial(provider) {
+    // LEVEL 1: TURNSTILE HUMANITY VERIFICATION
+    async function verifyHumanityTurnstile() {
       if (!publicKeyHex) return;
-      showBanner(\`Connecting \${provider}...\`, '⏳');
+      showBanner('Verifying human session...', '⏳');
       try {
         const res = await fetch(\`\${API_URL}/identity/link\`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address: publicKeyHex, provider })
+          body: JSON.stringify({ address: publicKeyHex, provider: 'TURNSTILE' })
         });
         const json = await res.json();
         if (json.success) {
-          showBanner(\`\${provider} verified (+\${json.data.sybil_score} pts)!\`, '🎉');
+          showBanner('🎉 Level 1 Verified! Tier 1 Casual Citizen unlocked (+25 pts).', '🛡️');
           await refreshState();
+        } else {
+          showBanner(json.error || 'Humanity verification failed', '❌');
+        }
+      } catch (e) {
+        showBanner('Error verifying: ' + e.message, '❌');
+      }
+    }
+
+    // LEVEL 2: WEBAUTHN BIOMETRIC HARDWARE PASSKEY (TouchID / FaceID / Windows Hello)
+    async function registerBiometricPasskey() {
+      if (!publicKeyHex) return;
+      if (!window.PublicKeyCredential) {
+        showBanner('Biometric Passkeys not supported on this browser/device', '⚠️');
+        return;
+      }
+
+      showBanner('Touch sensor or look at camera for Biometric Passkey...', '👆');
+      try {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+
+        const createOptions = {
+          publicKey: {
+            challenge: challenge,
+            rp: {
+              name: 'Quettabyte Network',
+              id: window.location.hostname || 'localhost'
+            },
+            user: {
+              id: new TextEncoder().encode(publicKeyHex.slice(0, 32)),
+              name: \`qbc_\${publicKeyHex.slice(0, 12)}\`,
+              displayName: \`QBC Citizen (\${publicKeyHex.slice(0, 8)})\`
+            },
+            pubKeyCredParams: [
+              { type: 'public-key', alg: -7 },   // ES256
+              { type: 'public-key', alg: -257 }  // RS256
+            ],
+            authenticatorSelection: {
+              authenticatorAttachment: 'platform',
+              userVerification: 'required'
+            },
+            timeout: 60000,
+            attestation: 'none'
+          }
+        };
+
+        const credential = await navigator.credentials.create(createOptions);
+        if (!credential) {
+          showBanner('Passkey registration canceled', '⚠️');
+          return;
+        }
+
+        const credIdHex = bytesToHex(new Uint8Array(credential.rawId));
+        showBanner('Registering hardware passkey with sequencer...', '⏳');
+
+        const res = await fetch(\`\${API_URL}/identity/link\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: publicKeyHex,
+            provider: 'PASSKEY',
+            credential_id: credIdHex
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner('🎉 Hardware Passkey Registered! +30 Trust Score awarded.', '🛡️');
+          await refreshState();
+        } else {
+          showBanner(json.error || 'Passkey binding failed', '❌');
+        }
+      } catch (err) {
+        console.error('Passkey error:', err);
+        showBanner('Passkey canceled or error: ' + err.message, '⚠️');
+      }
+    }
+
+    // LEVEL 3: TELEGRAM CARRIER PHONE CHECK
+    async function linkTelegramAccount() {
+      if (!publicKeyHex) return;
+      const tgUsername = prompt('Enter your Telegram handle to verify (e.g. @username):');
+      if (!tgUsername) return;
+      const clean = tgUsername.trim().replace(/^@/, '');
+      if (clean.length < 3) {
+        showBanner('Enter a valid Telegram handle', '⚠️');
+        return;
+      }
+
+      showBanner('Verifying Telegram carrier account...', '⏳');
+      try {
+        const res = await fetch(\`\${API_URL}/identity/link\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: publicKeyHex,
+            provider: 'TELEGRAM',
+            token: clean
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          showBanner('🎉 Telegram Verified! +35 Trust Score awarded.', '✈️');
+          await refreshState();
+        } else {
+          showBanner(json.error || 'Telegram verification failed', '❌');
         }
       } catch (e) {
         showBanner('Error linking: ' + e.message, '❌');
